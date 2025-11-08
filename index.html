@@ -68,7 +68,8 @@
       transition: all 0.3s ease;
       box-shadow: 0 4px 15px rgba(66, 165, 245, 0.4);
       font-weight: 600;
-      margin-top: 10px;
+      margin: 10px;
+      width: 220px;
     }
     
     button:hover {
@@ -94,34 +95,81 @@
       margin-bottom: 20px;
       border: 2px solid #bbdefb;
     }
+    
+    .calculator-options {
+      margin: 30px 0;
+    }
+    
+    .option-title {
+      color: #1565c0;
+      font-size: 1.2em;
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+    
+    .option-description {
+      color: #546e7a;
+      font-size: 0.9em;
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+    
+    .split-btn {
+      background: linear-gradient(135deg, #ba68c8, #8e24aa) !important;
+    }
+    
+    .split-btn:hover {
+      background: linear-gradient(135deg, #ab47bc, #6a1b9a) !important;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- <div class="step-indicator">第一步</div> -->
-    <h1>第一步：请输入价格数量</h1>
+    <!-- <div class="step-indicator"></div> -->
+    <h1>满赠计算器</h1>
     
     <div class="instructions">
-      你这次想买的谷子有多少种不同的价格？<br>
-      例如这次想买单价15元的吧唧、18元的拍立得、18元的小卡，一共有15和18两种单价，就输入2。
+      请选择你需要的计算器类型
     </div>
     
-    <div class="input-group">
-      <input type="number" id="num_prices" min="1" placeholder="比如4">
+    <div class="calculator-options">
+      <div class="option-title">凑单计算器</div>
+      <div class="option-description">
+        选择想买的单品，然后算出最接近满赠金额的方案。
+        <br>你这次想买的谷子有多少种不同的价格？</br>
+        例如这次想买单价15元的吧唧、18元的拍立得、18元的小卡，一共有15和18两种单价，就输入2。
+      </div>
+      
+      <div class="input-group">
+        <input type="number" id="num_prices" min="1" placeholder="比如4">
+      </div>
+      
+      <button onclick="nextPage()">用凑单计算器</button>
     </div>
-    
-    <button onclick="nextPage()">下一步</button>
+
+    <div style="margin: 30px 0; border-top: 2px solid #e3f2fd; padding-top: 30px;">
+      <div class="option-title">拆单计算器</div>
+      <div class="option-description">
+        选好你想买的谷子总数量和每一单的金额，把大量谷子拆分成接近满赠金额的订单。
+      </div>
+      
+      <button onclick="goToSplitCalculator()" class="split-btn">用拆单计算器</button>
+    </div>
   </div>
 
   <script>
     function nextPage() {
       const num = parseInt(document.getElementById('num_prices').value);
       if (isNaN(num) || num < 1) {
-        alert("请输入一个大于0的整数。");
+        alert("请输入一个大于0的数。");
         return;
       }
       localStorage.setItem("num_prices", num);
       window.location.href = "inputs.html";
+    }
+
+    function goToSplitCalculator() {
+      window.location.href = "split.html";
     }
 
     // Focus on input when page loads

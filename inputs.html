@@ -229,7 +229,7 @@
       // Check distinct prices
       const distinct = new Set(prices).size === prices.length;
       if (!distinct) {
-        document.getElementById("errorMsg").textContent = "Prices must be distinct.";
+        document.getElementById("errorMsg").textContent = "请输入不相同的价格。";
         return;
       }
 
