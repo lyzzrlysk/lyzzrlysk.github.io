@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Results</title>
+<style>
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      margin: 0;
+      padding: 40px;
+      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(33, 150, 243, 0.2);
+      padding: 30px;
+      position: relative;
+      border: 1px solid #e1f5fe;
+    }
+    
+    .back-btn { 
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      padding: 12px 20px;
+      font-size: 18px;
+      background: #42a5f5;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(66, 165, 245, 0.4);
+    }
+    
+    .back-btn:hover {
+      background: #1e88e5;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(66, 165, 245, 0.6);
+    }
+    
+    h1 {
+      text-align: center;
+      color: #1565c0;
+      margin-bottom: 10px;
+      font-size: 2.5em;
+      text-shadow: 0 2px 4px rgba(21, 101, 192, 0.1);
+    }
+    
+    .summary {
+      text-align: center;
+      font-size: 1.2em;
+      color: #546e7a;
+      margin-bottom: 30px;
+      padding: 15px;
+      background: #e3f2fd;
+      border-radius: 10px;
+      border-left: 4px solid #42a5f5;
+      box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);
+    }
+    
+    .results-count {
+      font-weight: bold;
+      color: #1565c0;
+      font-size: 1.3em;
+    }
+    
+    table { 
+      border-collapse: collapse; 
+      width: 100%; 
+      margin-top: 20px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 5px 15px rgba(33, 150, 243, 0.1);
+      background: white;
+    }
+    
+    th, td { 
+      border: 1px solid #e1f5fe; 
+      padding: 15px 12px; 
+      text-align: center;
+      transition: background-color 0.2s ease;
+    }
+    
+    th { 
+      background: linear-gradient(135deg, #42a5f5, #1976d2);
+      color: white;
+      font-weight: 600;
+      font-size: 1.1em;
+    }
+    
+    td {
+      background: #fafafa;
+    }
+    
+    tr:hover td {
+      background: #e3f2fd;
+    }
+    
+    .no-results {
+      text-align: center;
+      padding: 40px;
+      color: #546e7a;
+      font-size: 1.2em;
+      background: #e3f2fd;
+      border-radius: 10px;
+      margin-top: 20px;
+      border: 1px solid #bbdefb;
+    }
+    
+    /* Dynamic column width based on data */
+    th:nth-child(n), td:nth-child(n) {
+      min-width: 80px;
+    }
+    
+    /* Light purple total column */
+    th:last-child {
+      background: linear-gradient(135deg, #ba68c8, #8e24aa);
+      color: white;
+      font-weight: bold;
+    }
+    
+    td:last-child {
+      background: #f3e5f5;
+      color: #6a1b9a;
+      font-weight: bold;
+    }
+    
+    tr:hover td:last-child {
+      background: #e1bee7;
+    }
+    
+    /* Summary states */
+    .summary.no-results-style {
+      background: #ffebee;
+      border-left-color: #e57373;
+      color: #c62828;
+    }
+    
+    .summary.has-results-style {
+      background: #e8f5e9;
+      border-left-color: #66bb6a;
+      color: #2e7d32;
+    }
+</style>
+</head>
+<body>
+  <div class="container">
+    <button class="back-btn" onclick="history.back()">⬅ 返回</button>
+    <h1>满赠方案计算结果</h1>
+    
+    <div class="summary" id="resultsSummary">
+      <!-- Summary will be populated by JavaScript -->
+    </div>
+    
+    <table id="resultsTable"></table>
+  </div>
+
+  <script>
+    const prar = JSON.parse(localStorage.getItem("prar"));
+    const min_items = JSON.parse(localStorage.getItem("min_items"));
+    const line = parseFloat(localStorage.getItem("line"));
+    const errt = parseFloat(localStorage.getItem("errt"));
+    console.log("Loaded prar:", prar);
+    console.log("Loaded min_items:", min_items);
+    console.log("Line =", line, "Error =", errt);
+
+    const multi = prar.map(p => Math.ceil(line / p + 0.1));
+    const counter = Array(prar.length).fill(0);
+    const results = [];
+    console.log("Multiplicity cap:", multi);
+    console.log("Counter:", counter);
+
+    function dot(a, b) {
+      return a.reduce((sum, val, i) => sum + val * b[i], 0);
+    }
+
+    while (counter[0] < multi[0]) {
+      // Calculate current amount with counter only
+      let amount = dot(counter, prar);
+      
+      // If amount < line, max out last item
+      if (amount < line) {
+        const remaining = Math.ceil((line - amount) / prar[prar.length - 1]);
+        counter[counter.length - 1] += remaining;
+        amount = dot(counter, prar);
+        
+        // Check if this new combination is valid
+        if (amount >= line && (amount - line) <= errt) {
+          const items = min_items.map((m, i) => m + counter[i]);
+          const totalAmount = dot(items, prar);
+          results.push([...items, totalAmount]);
+        }
+      }
+
+      // Now amount >= line, jump the rightmost nonzero index until amount < line again
+      while (amount >= line) {
+        // Find rightmost nonzero index
+        let rind = -1;
+        for (let i = counter.length - 1; i >= 0; i--) {
+          if (counter[i] > 0) {
+            rind = i;
+            break;
+          }
+        }
+        
+        if (rind > 0) {
+          counter[rind] = 0;
+          rind -= 1;
+          counter[rind] += 1;
+        } else {
+          break;
+        }
+        
+        // Handle carryovers
+        while (rind > 0 && counter[rind] >= multi[rind]) {
+          counter[rind] = 0;
+          rind -= 1;
+          counter[rind] += 1;
+        }
+        
+        amount = dot(counter, prar);
+        
+        // Check if this new combination is valid
+        if (amount >= line && (amount - line) <= errt) {
+          const items = min_items.map((m, i) => m + counter[i]);
+          const totalAmount = dot(items, prar);
+          results.push([...items, totalAmount]);
+        }
+      }
+      
+      // Increment counter for next iteration
+      let curind = counter.length - 1;
+      counter[curind] += 1;
+      
+      // Handle counter overflow
+      while (curind > 0 && counter[curind] >= multi[curind]) {
+        counter[curind] = 0;
+        curind--;
+        counter[curind]++;
+      }
+
+      // Safety break to prevent infinite loops
+      if (results.length > 10000) {
+        console.warn("Safety break: Too many results");
+        break;
+      }
+    }
+
+    // Update results summary
+    const summaryElement = document.getElementById('resultsSummary');
+    if (results.length === 0) {
+      summaryElement.innerHTML = '没有找到你想要的方案。';
+      summaryElement.style.background = '#fff5f5';
+      summaryElement.style.borderLeftColor = '#ff6b6b';
+    } else {
+      summaryElement.innerHTML = `找到了<span class="results-count">${results.length}</span>种满赠方案：`;
+    }
+
+    // Render results table
+    console.log("Rendering...");
+    const table = document.getElementById("resultsTable");
+    
+    if (results.length > 0) {
+      const headerRow = document.createElement("tr");
+      prar.forEach(p => {
+        const th = document.createElement("th");
+        th.textContent = p;
+        headerRow.appendChild(th);
+      });
+      const totalHeader = document.createElement("th");
+      totalHeader.textContent = "总价";
+      headerRow.appendChild(totalHeader);
+      table.appendChild(headerRow);
+
+      results.forEach(row => {
+        const tr = document.createElement("tr");
+        row.forEach(val => {
+          const td = document.createElement("td");
+          td.textContent = val;
+          tr.appendChild(td);
+        });
+        table.appendChild(tr);
+      });
+    } else {
+      const msg = document.createElement("div");
+      msg.className = "no-results";
+      msg.textContent = "No valid combinations found for the given criteria. Please adjust your parameters and try again.";
+      document.querySelector('.container').appendChild(msg);
+    }
+  </script>
+</body>
+</html>

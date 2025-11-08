@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>满赠计算器</title>
+  <style>
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      margin: 0;
+      padding: 40px;
+      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(33, 150, 243, 0.2);
+      padding: 50px;
+      text-align: center;
+      border: 1px solid #e1f5fe;
+      max-width: 500px;
+      width: 100%;
+    }
+    
+    h1 {
+      color: #1565c0;
+      margin-bottom: 40px;
+      font-size: 2.2em;
+      text-shadow: 0 2px 4px rgba(21, 101, 192, 0.1);
+    }
+    
+    .input-group {
+      margin: 30px 0;
+    }
+    
+    input { 
+      padding: 15px 20px;
+      font-size: 18px;
+      border: 2px solid #e1f5fe;
+      border-radius: 8px;
+      width: 200px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: #42a5f5;
+      box-shadow: 0 0 0 3px rgba(66, 165, 245, 0.1);
+    }
+    
+    input::placeholder {
+      color: #90caf9;
+    }
+    
+    button { 
+      padding: 15px 40px; 
+      font-size: 18px; 
+      background: linear-gradient(135deg, #42a5f5, #1976d2);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(66, 165, 245, 0.4);
+      font-weight: 600;
+      margin-top: 10px;
+    }
+    
+    button:hover {
+      background: linear-gradient(135deg, #1e88e5, #1565c0);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(66, 165, 245, 0.6);
+    }
+    
+    .instructions {
+      color: #546e7a;
+      font-size: 1.1em;
+      margin-bottom: 30px;
+      line-height: 1.5;
+    }
+    
+    .step-indicator {
+      background: #e3f2fd;
+      color: #1976d2;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-weight: 600;
+      display: inline-block;
+      margin-bottom: 20px;
+      border: 2px solid #bbdefb;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- <div class="step-indicator">第一步</div> -->
+    <h1>第一步：请输入价格数量</h1>
+    
+    <div class="instructions">
+      你这次想买的谷子有多少种不同的价格？<br>
+      例如这次想买单价15元的吧唧、18元的拍立得、18元的小卡，一共有15和18两种单价，就输入2。
+    </div>
+    
+    <div class="input-group">
+      <input type="number" id="num_prices" min="1" placeholder="比如4">
+    </div>
+    
+    <button onclick="nextPage()">下一步</button>
+  </div>
+
+  <script>
+    function nextPage() {
+      const num = parseInt(document.getElementById('num_prices').value);
+      if (isNaN(num) || num < 1) {
+        alert("请输入一个大于0的整数。");
+        return;
+      }
+      localStorage.setItem("num_prices", num);
+      window.location.href = "inputs.html";
+    }
+
+    // Focus on input when page loads
+    document.getElementById('num_prices').focus();
+  </script>
+</body>
+</html>
