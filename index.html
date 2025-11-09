@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>满赠计算器</title>
   <style>
-    body { 
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
       padding: 40px;
       background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
@@ -14,7 +15,7 @@
       align-items: center;
       justify-content: center;
     }
-    
+
     .container {
       background: white;
       border-radius: 15px;
@@ -25,19 +26,19 @@
       max-width: 500px;
       width: 100%;
     }
-    
+
     h1 {
       color: #1565c0;
       margin-bottom: 40px;
       font-size: 2.2em;
       text-shadow: 0 2px 4px rgba(21, 101, 192, 0.1);
     }
-    
+
     .input-group {
       margin: 30px 0;
     }
-    
-    input { 
+
+    input {
       padding: 15px 20px;
       font-size: 18px;
       border: 2px solid #e1f5fe;
@@ -46,20 +47,20 @@
       text-align: center;
       transition: all 0.3s ease;
     }
-    
+
     input:focus {
       outline: none;
       border-color: #42a5f5;
       box-shadow: 0 0 0 3px rgba(66, 165, 245, 0.1);
     }
-    
+
     input::placeholder {
       color: #90caf9;
     }
-    
-    button { 
-      padding: 15px 40px; 
-      font-size: 18px; 
+
+    button {
+      padding: 15px 40px;
+      font-size: 18px;
       background: linear-gradient(135deg, #42a5f5, #1976d2);
       color: white;
       border: none;
@@ -71,20 +72,20 @@
       margin: 10px;
       width: 220px;
     }
-    
+
     button:hover {
       background: linear-gradient(135deg, #1e88e5, #1565c0);
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(66, 165, 245, 0.6);
     }
-    
+
     .instructions {
       color: #546e7a;
       font-size: 1.1em;
       margin-bottom: 30px;
       line-height: 1.5;
     }
-    
+
     .step-indicator {
       background: #e3f2fd;
       color: #1976d2;
@@ -95,55 +96,58 @@
       margin-bottom: 20px;
       border: 2px solid #bbdefb;
     }
-    
+
     .calculator-options {
       margin: 30px 0;
     }
-    
+
     .option-title {
       color: #1565c0;
       font-size: 1.2em;
       font-weight: 600;
       margin-bottom: 15px;
     }
-    
+
     .option-description {
       color: #546e7a;
       font-size: 0.9em;
       margin-bottom: 20px;
       line-height: 1.4;
     }
-    
+
     .split-btn {
       background: linear-gradient(135deg, #ba68c8, #8e24aa) !important;
     }
-    
+
     .split-btn:hover {
       background: linear-gradient(135deg, #ab47bc, #6a1b9a) !important;
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <!-- <div class="step-indicator"></div> -->
     <h1>满赠计算器</h1>
-    
+
     <div class="instructions">
       请选择你需要的计算器类型
     </div>
-    
+
     <div class="calculator-options">
       <div class="option-title">凑单计算器</div>
       <div class="option-description">
         选择想买的单品，然后算出最接近满赠金额的方案。
-        <br>你这次想买的谷子有多少种不同的价格？</br>
-        例如这次想买单价15元的吧唧、18元的拍立得、18元的小卡，一共有15和18两种单价，就输入2。
+        <br>
+        <br>你这次想买的谷子有多少种不同的价格？
+        <br>例如这次想买单价15元的吧唧、18元的拍立得、18元的小卡，
+        <br>一共有15和18两种单价，就输入2。
       </div>
-      
+
       <div class="input-group">
         <input type="number" id="num_prices" min="1" placeholder="比如4">
       </div>
-      
+
       <button onclick="nextPage()">用凑单计算器</button>
     </div>
 
@@ -152,28 +156,36 @@
       <div class="option-description">
         选好你想买的谷子总数量和每一单的金额，把大量谷子拆分成接近满赠金额的订单。
       </div>
-      
+
       <button onclick="goToSplitCalculator()" class="split-btn">用拆单计算器</button>
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e3f2fd; text-align: center;">
+        <p style="color: #666; font-size: 0.9em; margin: 0;">
+          遇到了bug或者想给一点建议？请在
+          <a href="http://xhslink.com/o/2x2YmjdAGOo" target="_blank" style="color: #42a5f5; text-decoration: none;">
+            小红书咋肥四鸭
+          </a>联系我💜
+        </p>
+      </div>
     </div>
-  </div>
 
-  <script>
-    function nextPage() {
-      const num = parseInt(document.getElementById('num_prices').value);
-      if (isNaN(num) || num < 1) {
-        alert("请输入一个大于0的数。");
-        return;
+    <script>
+      function nextPage() {
+        const num = parseInt(document.getElementById('num_prices').value);
+        if (isNaN(num) || num < 1) {
+          alert("请输入一个大于0的数。");
+          return;
+        }
+        localStorage.setItem("num_prices", num);
+        window.location.href = "inputs.html";
       }
-      localStorage.setItem("num_prices", num);
-      window.location.href = "inputs.html";
-    }
 
-    function goToSplitCalculator() {
-      window.location.href = "split.html";
-    }
+      function goToSplitCalculator() {
+        window.location.href = "split.html";
+      }
 
-    // Focus on input when page loads
-    document.getElementById('num_prices').focus();
-  </script>
+      // Focus on input when page loads
+      document.getElementById('num_prices').focus();
+    </script>
 </body>
+
 </html>

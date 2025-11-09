@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
-  <title>满赠计算器</title>
+  <title>凑单计算器</title>
   <style>
-    body { 
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
       padding: 40px;
       background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
       min-height: 100vh;
     }
-    
+
     .container {
       max-width: 800px;
       margin: 0 auto;
@@ -22,8 +23,8 @@
       position: relative;
       border: 1px solid #e1f5fe;
     }
-    
-    .back-btn { 
+
+    .back-btn {
       position: absolute;
       top: 20px;
       left: 20px;
@@ -37,13 +38,13 @@
       transition: all 0.3s ease;
       box-shadow: 0 4px 15px rgba(66, 165, 245, 0.4);
     }
-    
+
     .back-btn:hover {
       background: #1e88e5;
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(66, 165, 245, 0.6);
     }
-    
+
     h1 {
       text-align: center;
       color: #1565c0;
@@ -51,32 +52,32 @@
       font-size: 2.2em;
       text-shadow: 0 2px 4px rgba(21, 101, 192, 0.1);
     }
-    
+
     .input-section {
       margin-bottom: 25px;
     }
-    
-    .input-row { 
-      margin: 15px 0; 
+
+    .input-row {
+      margin: 15px 0;
       padding: 15px;
       background: #f8fbff;
       border-radius: 8px;
       border-left: 4px solid #42a5f5;
       transition: all 0.3s ease;
     }
-    
+
     .input-row:hover {
       background: #e3f2fd;
       transform: translateX(5px);
     }
-    
-    label { 
+
+    label {
       font-weight: 600;
       color: #1976d2;
       margin-right: 10px;
     }
-    
-    input { 
+
+    input {
       padding: 10px 12px;
       margin: 0 10px;
       border: 2px solid #e1f5fe;
@@ -84,13 +85,13 @@
       font-size: 14px;
       transition: all 0.3s ease;
     }
-    
+
     input:focus {
       outline: none;
       border-color: #42a5f5;
       box-shadow: 0 0 0 3px rgba(66, 165, 245, 0.1);
     }
-    
+
     .parameters {
       background: #f8fbff;
       padding: 20px;
@@ -98,23 +99,23 @@
       margin: 25px 0;
       border-left: 4px solid #ba68c8;
     }
-    
+
     .parameters label {
       color: #6a1b9a;
     }
-    
+
     .parameters input {
       border-color: #e1bee7;
     }
-    
+
     .parameters input:focus {
       border-color: #ba68c8;
       box-shadow: 0 0 0 3px rgba(186, 104, 200, 0.1);
     }
-    
-    button[type="button"] { 
-      padding: 15px 30px; 
-      font-size: 18px; 
+
+    button[type="button"] {
+      padding: 15px 30px;
+      font-size: 18px;
       margin-top: 20px;
       background: linear-gradient(135deg, #42a5f5, #1976d2);
       color: white;
@@ -126,16 +127,16 @@
       font-weight: 600;
       width: 100%;
     }
-    
+
     button[type="button"]:hover {
       background: linear-gradient(135deg, #1e88e5, #1565c0);
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(66, 165, 245, 0.6);
     }
-    
-    .error { 
-      color: #d32f2f; 
-      font-weight: bold; 
+
+    .error {
+      color: #d32f2f;
+      font-weight: bold;
       margin-top: 15px;
       padding: 15px;
       background: #ffebee;
@@ -143,12 +144,12 @@
       border-left: 4px solid #f44336;
       text-align: center;
     }
-    
+
     .input-group {
       display: inline-block;
       margin: 0 15px;
     }
-    
+
     .section-title {
       color: #1565c0;
       font-size: 1.1em;
@@ -159,12 +160,13 @@
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <button class="back-btn" onclick="history.back()">⬅ 返回</button>
-    <h1>第二步: 请输入谷子单价和最少买多少个</h1>
-    
-    <div class="section-title">谷子单价和最低数量</div>
+    <h1>凑单计算器</h1>
+
+    <div class="section-title">第二步: 请输入谷子单价和最低数量</div>
     <form id="inputForm"></form>
 
     <div class="parameters">
@@ -194,7 +196,7 @@
       div.classList.add("input-row");
       div.innerHTML = `
         <div class="input-group">
-          <label>价格 ${i+1}: </label>
+          <label>价格 ${i + 1}: </label>
           <input type="number" step="any" id="price${i}" required>
         </div>
         <div class="input-group">
@@ -243,10 +245,10 @@
 
       // Sort descending by price
       const combined = prices.map((p, i) => ({ price: p, min: min_items[i] }))
-                             .sort((a, b) => b.price - a.price);
+        .sort((a, b) => b.price - a.price);
       const prar = combined.map(obj => obj.price);
       const minSorted = combined.map(obj => obj.min);
- 
+
       console.log("Prices entered:", prices);
       console.log("Min items:", min_items);
       console.log("Target:", target);
@@ -261,4 +263,5 @@
     }
   </script>
 </body>
+
 </html>
