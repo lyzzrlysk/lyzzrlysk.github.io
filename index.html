@@ -138,17 +138,9 @@
       <div class="option-title">凑单计算器</div>
       <div class="option-description">
         选择想买的单品，然后算出最接近满赠金额的方案。
-        <br>
-        <br>你这次想买的谷子有多少种不同的价格？
-        <br>例如想买单价15元的吧唧、18元的拍立得、18元的小卡，
-        <br>一共有15和18两种单价，就输入2。
       </div>
 
-      <div class="input-group">
-        <input type="number" id="num_prices" min="1" placeholder="比如4">
-      </div>
-
-      <button onclick="nextPage()">用凑单计算器</button>
+      <button onclick="goToFillCalculator()">用凑单计算器</button>
     </div>
 
     <div style="margin: 30px 0; border-top: 2px solid #e3f2fd; padding-top: 30px;">
@@ -170,18 +162,12 @@
     </div>
 
     <script>
-      function nextPage() {
-        const num = parseInt(document.getElementById('num_prices').value);
-        if (isNaN(num) || num < 1) {
-          alert("请输入一个大于0的数。");
-          return;
-        }
-        localStorage.setItem("num_prices", num);
-        window.location.href = "inputs.html";
+      function goToFillCalculator() {
+        window.location.href = "凑单计算器.html";
       }
 
       function goToSplitCalculator() {
-        window.location.href = "split.html";
+        window.location.href = "拆单计算器.html";
       }
 
       // Focus on input when page loads
