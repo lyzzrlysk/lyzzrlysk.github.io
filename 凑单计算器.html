@@ -524,7 +524,8 @@
 
       return {
         success: true,
-        results: results
+        results: results,
+        sortedPrices: sortedPrar
       };
     }
 
@@ -548,13 +549,13 @@
         summaryElement.style.borderLeftColor = '#66bb6a';
         summaryElement.style.color = '#2e7d32';
 
-        if (result.results.length > 5000) {
-          document.getElementById("errorMsg").textContent = "找到了超过5000种方案，请考虑增加最低数量。";
+        if (result.results.length > 1000) {
+          document.getElementById("errorMsg").textContent = "找到了超过1000种方案，请考虑增加最低数量。";
         }
 
         // Render results table
         const headerRow = document.createElement("tr");
-        prices.forEach(p => {
+        result.sortedPrices.forEach(p => {
           const th = document.createElement("th");
           th.textContent = "¥" + p;
           headerRow.appendChild(th);
