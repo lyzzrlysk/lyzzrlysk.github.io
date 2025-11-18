@@ -146,33 +146,46 @@
     <div style="margin: 30px 0; border-top: 2px solid #e3f2fd; padding-top: 30px;">
       <div class="option-title">拆单计算器</div>
       <div class="option-description">
-        选好你想买的谷子总数量和每一单的金额，把大量谷子拆分成接近满赠金额的订单。
+        选好想买的谷子总数量和每一单的金额，<br>
+        把大量谷子拆分成接近<b>同一满赠金额</b>的订单。
       </div>
 
       <button onclick="goToSplitCalculator()" class="split-btn">用拆单计算器</button>
-      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e3f2fd; text-align: center;">
-        <p style="color: #666; font-size: 0.9em; margin: 0;">
-          遇到了bug或者想给一点建议？
-          <br>请在
-          <a href="http://xhslink.com/o/2x2YmjdAGOo" target="_blank" style="color: #42a5f5; text-decoration: none;">
-            小红书咋肥四鸭
-          </a>联系我💜
-        </p>
+
+      <div style="margin: 30px 0; border-top: 2px solid #e3f2fd; padding-top: 30px;">
+        <div class="option-title">拆多种单计算器</div>
+        <div class="option-description">
+          选好想买的谷子总数量和每一单的金额，<br>
+          把大量谷子拆分成接近<b>不同满赠金额</b>的订单。
+        </div>
+
+        <button onclick="goToMultiSplitCalculator()" class="split-btn">用拆多种单计算器</button>
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e3f2fd; text-align: center;">
+          <p style="color: #666; font-size: 0.9em; margin: 0;">
+            遇到了bug或者想给一点建议？
+            <br>请在
+            <a href="http://xhslink.com/o/2x2YmjdAGOo" target="_blank" style="color: #42a5f5; text-decoration: none;">
+              小红书咋肥四鸭
+            </a>联系我💜
+          </p>
+        </div>
       </div>
-    </div>
 
-    <script>
-      function goToFillCalculator() {
-        window.location.href = "凑单计算器.html";
-      }
+      <script>
+        function goToFillCalculator() {
+          window.location.href = "凑单计算器.html";
+        }
 
-      function goToSplitCalculator() {
-        window.location.href = "拆单计算器.html";
-      }
+        function goToSplitCalculator() {
+          window.location.href = "拆单计算器.html";
+        }
+        function goToMultiSplitCalculator() {
+          window.location.href = "拆单计算器gamma.html";
+        }
 
-      // Focus on input when page loads
-      document.getElementById('num_prices').focus();
-    </script>
+        // Focus on input when page loads
+        document.getElementById('num_prices').focus();
+      </script>
 </body>
 
 </html>
