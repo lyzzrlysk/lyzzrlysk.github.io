@@ -125,9 +125,11 @@
     }
 
     .input-group {
-      display: inline-block;
+      display: flex;
+      align-items: center;
       margin: 0 15px;
     }
+
 
     .section-title {
       color: #1565c0;
@@ -303,14 +305,20 @@
       background: linear-gradient(135deg, #e53935, #c62828) !important;
     }
 
-    /* New styles for multiple target inputs */
     .target-row {
+      margin: 15px 0;
+      padding: 15px;
+      background: #f8fbff;
+      border-radius: 8px;
+      border-left: 4px solid #42a5f5;
+      transition: all 0.3s ease;
       display: flex;
       align-items: center;
-      margin-bottom: 10px;
-      padding: 10px;
-      background: #f0f8ff;
-      border-radius: 6px;
+    }
+
+    .target-row:hover {
+      background: #e3f2fd;
+      transform: translateX(5px);
     }
 
     .target-input-group {
@@ -325,8 +333,9 @@
 
     .delete-btn {
       background: linear-gradient(135deg, #ef5350, #d32f2f) !important;
-      padding: 8px 15px !important;
+      padding: 10px 20px !important;
       margin-left: 10px !important;
+      margin-top: 0px;
       width: auto !important;
     }
 
@@ -489,10 +498,14 @@
           <!-- Target rows will be dynamically added here -->
           <div class="target-row" id="targetRow0">
             <div class="target-input-group">
-              <label>每单金额：</label>
-              <input type="number" class="target-price" min="1" placeholder="比如188" required>
-              <label>多少单：</label>
-              <input type="number" class="target-count" min="1" value="1" required>
+              <div class="input-group">
+                <label>每单价格：</label>
+                <input type="number" class="target-price" min="1" placeholder="比如188" required>
+              </div>
+              <div class="input-group">
+                <label>多少单：</label>
+                <input type="number" class="target-count" min="1" value="1" required>
+              </div>
             </div>
             <button type="button" class="delete-btn" onclick="removeTargetRow(0)" style="display: none;">删除</button>
           </div>
@@ -606,10 +619,14 @@
       newRow.id = 'targetRow' + targetRowCount;
       newRow.innerHTML = `
         <div class="target-input-group">
-          <label>每单价格：</label>
-          <input type="number" class="target-price" min="1" placeholder="比如188" required>
-          <label>多少单：</label>
-          <input type="number" class="target-count" min="1" value="1" required>
+          <div class="input-group">
+            <label>每单价格：</label>
+            <input type="number" class="target-price" min="1" placeholder="比如188" required>
+          </div>
+          <div class="input-group">
+            <label>多少单：</label>
+            <input type="number" class="target-count" min="1" value="1" required>
+          </div>
         </div>
         <button type="button" class="delete-btn" onclick="removeTargetRow(${targetRowCount})">删除</button>
       `;
@@ -908,6 +925,10 @@
         current.leftoverValue < best.leftoverValue ? current : best
       );
 
+      let bestTabName = 'schemeA';
+      if (bestScheme === schemeB) bestTabName = 'schemeB';
+      if (bestScheme === schemeC) bestTabName = 'schemeC';
+
       // Update summary
       const summaryElement = document.getElementById('resultsSummary');
       if (schemeA.successfulCombinations === 0 && schemeB.successfulCombinations === 0 && schemeC.successfulCombinations === 0) {
@@ -962,6 +983,8 @@
       document.getElementById('schemeA').innerHTML = createSchemeDisplay(schemeA, prices, '方案A：按输入顺序');
       document.getElementById('schemeB').innerHTML = createSchemeDisplay(schemeB, prices, '方案B：按价格从高到低');
       document.getElementById('schemeC').innerHTML = createSchemeDisplay(schemeC, prices, '方案C：随机优化');
+      
+      switchTab(bestTabName);
     }
 
     function createSchemeDisplay(scheme, prices, title) {
@@ -1069,10 +1092,14 @@
       container.innerHTML = `
         <div class="target-row" id="targetRow0">
           <div class="target-input-group">
-            <label>每单价格：</label>
-            <input type="number" class="target-price" min="1" placeholder="比如188" required>
-            <label>多少单：</label>
-            <input type="number" class="target-count" min="1" value="1" required>
+              <div class="input-group">
+                <label>每单价格：</label>
+                <input type="number" class="target-price" min="1" placeholder="比如188" required>
+              </div>
+              <div class="input-group">
+                <label>多少单：</label>
+                <input type="number" class="target-count" min="1" value="1" required>
+              </div>
           </div>
           <button type="button" class="delete-btn" onclick="removeTargetRow(0)" style="display: none;">删除</button>
         </div>
