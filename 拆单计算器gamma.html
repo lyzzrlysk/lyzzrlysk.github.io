@@ -456,7 +456,7 @@
     </div>
 
     <div class="info-box">
-      <strong>使用说明：</strong> 先输入谷子的单价，然后输入每个价格的谷子需要多少份、每单多少金额，然后计算器会算出怎么拆单。
+      <strong>使用说明：</strong> 先输入谷子的单价，然后输入每个价格的谷子需要多少份、每单的金额和每种金额多少单，计算器会算出怎么拆单。
     </div>
 
     <!-- Step 1: Price List Input -->
@@ -484,12 +484,12 @@
           </div>
         </div>
 
-        <div class="section-title" style="color: #6a1b9a; margin-top: 20px;">目标价格设置</div>
+        <div class="section-title" style="color: #6a1b9a; margin-top: 20px;">目标金额设置</div>
         <div id="targetInputsContainer">
           <!-- Target rows will be dynamically added here -->
           <div class="target-row" id="targetRow0">
             <div class="target-input-group">
-              <label>每单价格：</label>
+              <label>每单金额：</label>
               <input type="number" class="target-price" min="1" placeholder="比如188" required>
               <label>多少单：</label>
               <input type="number" class="target-count" min="1" value="1" required>
@@ -498,7 +498,7 @@
           </div>
         </div>
 
-        <button type="button" onclick="addTargetRow()" class="add-btn">+ 添加目标价格</button>
+        <button type="button" onclick="addTargetRow()" class="add-btn">+ 添加目标金额</button>
       </div>
 
       <button type="button" onclick="calculateCombinations()">计算拆单方案</button>
