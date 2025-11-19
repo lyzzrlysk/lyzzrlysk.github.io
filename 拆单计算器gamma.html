@@ -331,12 +331,18 @@
       min-width: 80px;
     }
 
+    .target-price,
+    .target-count {
+      max-width: 120px;
+    }
+
     .delete-btn {
       background: linear-gradient(135deg, #ef5350, #d32f2f) !important;
       padding: 10px 20px !important;
       margin-left: 10px !important;
       margin-top: 0px;
       width: auto !important;
+      white-space: nowrap;
     }
 
     .delete-btn:hover {
@@ -983,7 +989,7 @@
       document.getElementById('schemeA').innerHTML = createSchemeDisplay(schemeA, prices, '方案A：按输入顺序');
       document.getElementById('schemeB').innerHTML = createSchemeDisplay(schemeB, prices, '方案B：按价格从高到低');
       document.getElementById('schemeC').innerHTML = createSchemeDisplay(schemeC, prices, '方案C：随机优化');
-      
+
       switchTab(bestTabName);
     }
 
