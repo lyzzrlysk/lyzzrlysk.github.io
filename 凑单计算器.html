@@ -58,9 +58,7 @@
                 <table id="resultsTable"></table>
             </div>
 
-            <button onclick="window.scrollTo({top:0, behavior:'smooth'})"
-                style="background:var(--input-bg); color:var(--text-color); width:100%; margin-top:30px;">↑
-                回到顶部</button>
+            <button class="btn-scroll-top" onclick="window.scrollTo({top:0, behavior:'smooth'})">↑</button>
         </div>
     </div>
 
@@ -150,6 +148,12 @@
             saveData();
         }
 
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            el.textContent = msg;
+            el.style.display = 'block';
+        }
+
         // --- Algorithm: Recursive Combination Finder ---
         function calculate() {
             const errorEl = document.getElementById('errorMsg');
@@ -177,15 +181,13 @@
             if (items.length === 0) return showError("请至少输入一个有效的商品单价。");
             if (isNaN(target) || target <= 0) return showError("请输入有效的目标总价。");
 
-            // --- SORTING ITEMS BY PRICE DESCENDING BEFORE CALCULATION ---
+            // Sort items
             items.sort((a, b) => b.price - a.price);
 
-            // Logic
             const results = [];
             const len = items.length;
             const prices = items.map(i => i.price);
             const minItems = items.map(i => i.min);
-
             const baseCost = items.reduce((sum, item) => sum + item.price * item.min, 0);
 
             if (baseCost > target + errt) {
@@ -195,8 +197,18 @@
             const remainingMin = Math.max(0, target - baseCost);
             const remainingMax = target + errt - baseCost;
 
+            // Limit Flag
+            let limitReached = false;
+            const MAX_RESULTS = 500;
+
             function search(index, currentCounts, currentSum) {
-                if (results.length > 500) return; // Limit results
+                if (limitReached) return;
+
+                // Check Limit
+                if (results.length >= MAX_RESULTS) {
+                    limitReached = true;
+                    return;
+                }
 
                 if (currentSum >= remainingMin && currentSum <= remainingMax) {
                     const totalCounts = currentCounts.map((c, i) => c + minItems[i]);
@@ -213,58 +225,72 @@
                     currentCounts[index] = q;
                     search(index + 1, currentCounts, currentSum + (q * price));
                     currentCounts[index] = 0; // Backtrack
+                    if (limitReached) return; // Break loop if limit hit
                 }
             }
 
             search(0, new Array(len).fill(0), 0);
 
-            // --- New Sorting Logic for Rows ---
+            // Sorting
             results.sort((a, b) => {
-                // Priority 1: Total Price (Ascending)
                 const totalA = a[a.length - 1];
                 const totalB = b[b.length - 1];
-                if (Math.abs(totalA - totalB) > 0.001) {
-                    return totalA - totalB;
-                }
-
-                // Priority 2: Quantity of Most Expensive Items (Descending)
+                if (Math.abs(totalA - totalB) > 0.001) return totalA - totalB;
                 for (let i = 0; i <= len - 1; i++) {
-                    if (a[i] !== b[i]) {
-                        return b[i] - a[i];
-                    }
+                    if (a[i] !== b[i]) return b[i] - a[i];
                 }
                 return 0;
             });
 
-            displayResults(results, items);
+            // Pass the limit flag to display
+            displayResults(results, items, limitReached);
         }
 
-        function showError(msg) {
-            const el = document.getElementById('errorMsg');
-            el.textContent = msg;
-            el.style.display = 'block';
-        }
-
-        function displayResults(results, items) {
+        function displayResults(results, items, limitReached) {
             const section = document.getElementById('resultsSection');
             const summary = document.getElementById('resultsSummary');
             const table = document.getElementById('resultsTable');
 
+            // Ensure we have a container for mobile cards
+            let mobileContainer = document.getElementById('mobileResults');
+            if (!mobileContainer) {
+                mobileContainer = document.createElement('div');
+                mobileContainer.id = 'mobileResults';
+                mobileContainer.className = 'mobile-results-container';
+                // Insert it after the table-responsive div
+                document.querySelector('.table-responsive').after(mobileContainer);
+            }
+
+            // Handle Warning Banner
+            const existingWarning = document.getElementById('limitWarningBanner');
+            if (existingWarning) existingWarning.remove();
+
             section.style.display = 'block';
+            mobileContainer.innerHTML = '';
+            table.innerHTML = '';
 
             if (results.length === 0) {
                 summary.innerHTML = "未找到满足条件的方案";
                 summary.style.backgroundColor = "var(--error-bg)";
                 summary.style.color = "var(--error-text)";
-                table.innerHTML = '';
                 return;
+            }
+
+            // Add Warning if Limit Reached
+            if (limitReached) {
+                const warning = document.createElement('div');
+                warning.id = 'limitWarningBanner';
+                warning.className = 'limit-warning';
+                warning.innerHTML = `<span>结果过多，仅显示前 500 条方案。建议增加“最低数量”或减少“允许超出”金额。</span>`;
+                // Insert after summary
+                summary.after(warning);
             }
 
             summary.innerHTML = `成功找到 <b>${results.length}</b> 种方案`;
             summary.style.backgroundColor = "var(--success-bg)";
             summary.style.color = "var(--success-text)";
 
-            // Build Table Headers
+            // --- 1. Build Desktop Table ---
             let headerHTML = '<thead><tr>';
             items.forEach(item => {
                 headerHTML += `<th>${item.name}<br><small style="font-weight:400; opacity:0.8;">¥${item.price}</small></th>`;
@@ -281,11 +307,43 @@
                     tr.appendChild(td);
                 }
                 const totalTd = document.createElement('td');
-                totalTd.innerHTML = `<b>${parseFloat(row[row.length - 1].toFixed(2))}</b>`;
+                // Float fix
+                totalTd.innerHTML = `<b>¥${parseFloat(row[row.length - 1].toFixed(2))}</b>`;
                 tr.appendChild(totalTd);
                 tbody.appendChild(tr);
             });
             table.appendChild(tbody);
+
+            // --- 2. Build Mobile Cards ---
+            results.forEach((row, index) => {
+                const totalVal = row[row.length - 1];
+
+                let itemsHtml = '';
+                // Only loop through items (exclude the last element which is total)
+                for (let i = 0; i < row.length - 1; i++) {
+                    const count = row[i];
+                    if (count > 0) {
+                        // Only show items that have a quantity
+                        itemsHtml += `
+              <div class="result-item-line">
+                <span class="result-item-name">${items[i].name} (¥${items[i].price})</span>
+                <span style="font-weight:600;">x ${count}</span>
+              </div>
+            `;
+                    }
+                }
+
+                const card = document.createElement('div');
+                card.className = 'result-card';
+                card.innerHTML = `
+          <div class="result-card-header">
+            <span>方案 ${index + 1}</span>
+            <span>¥${parseFloat(totalVal.toFixed(2))}</span>
+          </div>
+          ${itemsHtml}
+        `;
+                mobileContainer.appendChild(card);
+            });
 
             section.scrollIntoView({ behavior: 'smooth' });
         }
