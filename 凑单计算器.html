@@ -1,131 +1,137 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>凑单计算器</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>凑单计算器</title>
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <div class="container">
-    <!-- Circular Home Button -->
-    <a href="index.html" class="btn-home" aria-label="Home">🏠</a>
-    
-    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+    <div class="container">
+        <!-- Circular Home Button -->
+        <a href="index.html" class="btn-home" aria-label="Home">🏠</a>
 
-    <h1>凑单计算器</h1>
-    
-    <div class="info-box">
-      <div>
-        <strong>使用说明：</strong> 输入商品的单价、<b>最低</b>需要的数量、目标总价，计算器会给出最接近目标的方案。
-      </div>
+        <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+
+        <h1>凑单计算器</h1>
+
+        <div class="info-box">
+            <div>
+                <strong>使用说明：</strong> 输入商品的单价、<b>最低</b>需要的数量、目标总价，计算器会给出最接近目标的方案。
+            </div>
+        </div>
+
+        <!-- Step 1: Items -->
+        <div class="section-title">第一步：添加商品</div>
+        <div id="items-container"></div>
+        <button class="btn-add" onclick="addItemRow()">+ 添加一行商品</button>
+
+        <!-- Step 2: Parameters -->
+        <div class="section-title">第二步：设置目标</div>
+        <div class="input-row" style="background: var(--card-bg); box-shadow: var(--shadow-card);">
+            <div class="input-group">
+                <label>目标总价 (¥)</label>
+                <input type="number" id="target" placeholder="例如 300" onchange="saveData()">
+            </div>
+            <div class="input-group">
+                <label>允许超出 (¥)</label>
+                <input type="number" id="errt" value="0" min="0" onchange="saveData()">
+            </div>
+        </div>
+
+        <button class="btn-primary" onclick="calculate()">开始计算</button>
+
+        <!-- Error Message -->
+        <div id="errorMsg"
+            style="display:none; margin-top:20px; padding:15px; background:var(--error-bg); color:var(--error-text); border-radius:12px; text-align:center;">
+        </div>
+
+        <!-- Results -->
+        <div id="resultsSection" class="results-area">
+            <h2>计算结果</h2>
+            <div id="resultsSummary" class="summary-card"></div>
+
+            <!-- Table wrapper with sticky header enabled via CSS -->
+            <div class="table-responsive">
+                <table id="resultsTable"></table>
+            </div>
+
+            <button onclick="window.scrollTo({top:0, behavior:'smooth'})"
+                style="background:var(--input-bg); color:var(--text-color); width:100%; margin-top:30px;">↑
+                回到顶部</button>
+        </div>
     </div>
 
-    <!-- Step 1: Items -->
-    <div class="section-title">第一步：添加商品</div>
-    <div id="items-container"></div>
-    <button class="btn-add" onclick="addItemRow()">+ 添加一行商品</button>
-
-    <!-- Step 2: Parameters -->
-    <div class="section-title">第二步：设置目标</div>
-    <div class="input-row" style="background: var(--card-bg); box-shadow: var(--shadow-card);">
-      <div class="input-group">
-        <label>目标总价 (¥)</label>
-        <input type="number" id="target" placeholder="例如 300" onchange="saveData()">
-      </div>
-      <div class="input-group">
-        <label>允许超出 (¥)</label>
-        <input type="number" id="errt" value="0" min="0" onchange="saveData()">
-      </div>
-    </div>
-
-    <button class="btn-primary" onclick="calculate()">开始计算</button>
-    
-    <!-- Error Message -->
-    <div id="errorMsg" style="display:none; margin-top:20px; padding:15px; background:var(--error-bg); color:var(--error-text); border-radius:12px; text-align:center;"></div>
-
-    <!-- Results -->
-    <div id="resultsSection" class="results-area">
-      <h2>计算结果</h2>
-      <div id="resultsSummary" class="summary-card"></div>
-      
-      <!-- Table wrapper with sticky header enabled via CSS -->
-      <div class="table-responsive">
-        <table id="resultsTable"></table>
-      </div>
-      
-      <button onclick="window.scrollTo({top:0, behavior:'smooth'})" style="background:var(--input-bg); color:var(--text-color); width:100%; margin-top:30px;">↑ 回到顶部</button>
-    </div>
-  </div>
-
-  <script>
-    // --- Init ---
-    document.addEventListener('DOMContentLoaded', () => {
-      loadTheme();
-      loadData();
-    });
-
-    // --- Theme Logic ---
-    function toggleTheme() {
-      const html = document.documentElement;
-      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      html.setAttribute('data-theme', next);
-      localStorage.setItem('theme', next);
-      document.getElementById('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
-    }
-    function loadTheme() {
-      const saved = localStorage.getItem('theme') || 'light';
-      document.documentElement.setAttribute('data-theme', saved);
-      document.getElementById('themeBtn').textContent = saved === 'dark' ? '☀️' : '🌙';
-    }
-
-    // --- Data Persistence ---
-    function saveData() {
-      const items = [];
-      document.querySelectorAll('.item-row').forEach(row => {
-        items.push({
-          name: row.querySelector('.name-input').value,
-          price: row.querySelector('.price-input').value,
-          qty: row.querySelector('.qty-input').value
+    <script>
+        // --- Init ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTheme();
+            loadData();
         });
-      });
-      const data = {
-        items: items,
-        target: document.getElementById('target').value,
-        errt: document.getElementById('errt').value
-      };
-      localStorage.setItem('fill_calc_data', JSON.stringify(data));
-    }
 
-    function loadData() {
-      const saved = localStorage.getItem('fill_calc_data');
-      const container = document.getElementById('items-container');
-      container.innerHTML = '';
-      
-      if (saved) {
-        const data = JSON.parse(saved);
-        if (data.items && data.items.length > 0) {
-          data.items.forEach(item => addItemRow(item.name, item.price, item.qty));
-        } else {
-          initEmptyRows();
+        // --- Theme Logic ---
+        function toggleTheme() {
+            const html = document.documentElement;
+            const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            document.getElementById('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
         }
-        document.getElementById('target').value = data.target || '';
-        document.getElementById('errt').value = data.errt || 0;
-      } else {
-        initEmptyRows();
-      }
-    }
+        function loadTheme() {
+            const saved = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', saved);
+            document.getElementById('themeBtn').textContent = saved === 'dark' ? '☀️' : '🌙';
+        }
 
-    function initEmptyRows() {
-      addItemRow(); addItemRow(); addItemRow();
-    }
+        // --- Data Persistence ---
+        function saveData() {
+            const items = [];
+            document.querySelectorAll('.item-row').forEach(row => {
+                items.push({
+                    name: row.querySelector('.name-input').value,
+                    price: row.querySelector('.price-input').value,
+                    qty: row.querySelector('.qty-input').value
+                });
+            });
+            const data = {
+                items: items,
+                target: document.getElementById('target').value,
+                errt: document.getElementById('errt').value
+            };
+            localStorage.setItem('fill_calc_data', JSON.stringify(data));
+        }
 
-    // --- UI Logic ---
-    function addItemRow(name = '', price = '', qty = '') {
-      const container = document.getElementById('items-container');
-      const div = document.createElement('div');
-      div.className = 'input-row item-row';
-      div.innerHTML = `
+        function loadData() {
+            const saved = localStorage.getItem('fill_calc_data');
+            const container = document.getElementById('items-container');
+            container.innerHTML = '';
+
+            if (saved) {
+                const data = JSON.parse(saved);
+                if (data.items && data.items.length > 0) {
+                    data.items.forEach(item => addItemRow(item.name, item.price, item.qty));
+                } else {
+                    initEmptyRows();
+                }
+                document.getElementById('target').value = data.target || '';
+                document.getElementById('errt').value = data.errt || 0;
+            } else {
+                initEmptyRows();
+            }
+        }
+
+        function initEmptyRows() {
+            addItemRow(); addItemRow(); addItemRow();
+        }
+
+        // --- UI Logic ---
+        function addItemRow(name = '', price = '', qty = '') {
+            const container = document.getElementById('items-container');
+            const div = document.createElement('div');
+            div.className = 'input-row item-row';
+            div.innerHTML = `
         <div class="input-group" style="flex: 1.5;">
           <label>商品名 (选填)</label>
           <input type="text" class="name-input" placeholder="例如: 吧唧" value="${name}" onchange="saveData()">
@@ -140,149 +146,150 @@
         </div>
         <button class="btn-remove" onclick="this.parentElement.remove(); saveData()">✕</button>
       `;
-      container.appendChild(div);
-      saveData();
-    }
-
-    // --- Algorithm: Recursive Combination Finder ---
-    function calculate() {
-      const errorEl = document.getElementById('errorMsg');
-      errorEl.style.display = 'none';
-
-      const items = [];
-      
-      // Read Inputs
-      document.querySelectorAll('.item-row').forEach(row => {
-        const n = row.querySelector('.name-input').value.trim();
-        const p = parseFloat(row.querySelector('.price-input').value);
-        const q = parseInt(row.querySelector('.qty-input').value);
-        if (!isNaN(p) && p > 0) {
-          items.push({
-            name: n || `¥${p}`,
-            price: p,
-            min: isNaN(q) ? 0 : q
-          });
-        }
-      });
-
-      const target = parseFloat(document.getElementById('target').value);
-      const errt = parseFloat(document.getElementById('errt').value) || 0;
-
-      if (items.length === 0) return showError("请至少输入一个有效的商品单价。");
-      if (isNaN(target) || target <= 0) return showError("请输入有效的目标总价。");
-
-      // --- SORTING ITEMS BY PRICE DESCENDING BEFORE CALCULATION ---
-      items.sort((a, b) => b.price - a.price);
-
-      // Logic
-      const results = [];
-      const len = items.length;
-      const prices = items.map(i => i.price);
-      const minItems = items.map(i => i.min);
-
-      const baseCost = items.reduce((sum, item) => sum + item.price * item.min, 0);
-      
-      if (baseCost > target + errt) {
-        return showError(`最低数量的总价 (¥${baseCost}) 已经超过了上限 (¥${target+errt})。`);
-      }
-
-      const remainingMin = Math.max(0, target - baseCost);
-      const remainingMax = target + errt - baseCost;
-
-      function search(index, currentCounts, currentSum) {
-        if (results.length > 500) return; // Limit results
-
-        if (currentSum >= remainingMin && currentSum <= remainingMax) {
-          const totalCounts = currentCounts.map((c, i) => c + minItems[i]);
-          const totalVal = totalCounts.reduce((s, c, i) => s + c * prices[i], 0);
-          results.push([...totalCounts, totalVal]);
+            container.appendChild(div);
+            saveData();
         }
 
-        if (currentSum > remainingMax || index >= len) return;
+        // --- Algorithm: Recursive Combination Finder ---
+        function calculate() {
+            const errorEl = document.getElementById('errorMsg');
+            errorEl.style.display = 'none';
 
-        const price = prices[index];
-        const maxQty = Math.floor((remainingMax - currentSum) / price);
+            const items = [];
 
-        for (let q = 0; q <= maxQty; q++) {
-          currentCounts[index] = q;
-          search(index + 1, currentCounts, currentSum + (q * price));
-          currentCounts[index] = 0; // Backtrack
+            // Read Inputs
+            document.querySelectorAll('.item-row').forEach(row => {
+                const n = row.querySelector('.name-input').value.trim();
+                const p = parseFloat(row.querySelector('.price-input').value);
+                const q = parseInt(row.querySelector('.qty-input').value);
+                if (!isNaN(p) && p > 0) {
+                    items.push({
+                        name: n || `¥${p}`,
+                        price: p,
+                        min: isNaN(q) ? 0 : q
+                    });
+                }
+            });
+
+            const target = parseFloat(document.getElementById('target').value);
+            const errt = parseFloat(document.getElementById('errt').value) || 0;
+
+            if (items.length === 0) return showError("请至少输入一个有效的商品单价。");
+            if (isNaN(target) || target <= 0) return showError("请输入有效的目标总价。");
+
+            // --- SORTING ITEMS BY PRICE DESCENDING BEFORE CALCULATION ---
+            items.sort((a, b) => b.price - a.price);
+
+            // Logic
+            const results = [];
+            const len = items.length;
+            const prices = items.map(i => i.price);
+            const minItems = items.map(i => i.min);
+
+            const baseCost = items.reduce((sum, item) => sum + item.price * item.min, 0);
+
+            if (baseCost > target + errt) {
+                return showError(`最低数量的总价 (¥${baseCost}) 已经超过了上限 (¥${target + errt})。`);
+            }
+
+            const remainingMin = Math.max(0, target - baseCost);
+            const remainingMax = target + errt - baseCost;
+
+            function search(index, currentCounts, currentSum) {
+                if (results.length > 500) return; // Limit results
+
+                if (currentSum >= remainingMin && currentSum <= remainingMax) {
+                    const totalCounts = currentCounts.map((c, i) => c + minItems[i]);
+                    const totalVal = totalCounts.reduce((s, c, i) => s + c * prices[i], 0);
+                    results.push([...totalCounts, totalVal]);
+                }
+
+                if (currentSum > remainingMax || index >= len) return;
+
+                const price = prices[index];
+                const maxQty = Math.floor((remainingMax - currentSum) / price);
+
+                for (let q = 0; q <= maxQty; q++) {
+                    currentCounts[index] = q;
+                    search(index + 1, currentCounts, currentSum + (q * price));
+                    currentCounts[index] = 0; // Backtrack
+                }
+            }
+
+            search(0, new Array(len).fill(0), 0);
+
+            // --- New Sorting Logic for Rows ---
+            results.sort((a, b) => {
+                // Priority 1: Total Price (Ascending)
+                const totalA = a[a.length - 1];
+                const totalB = b[b.length - 1];
+                if (Math.abs(totalA - totalB) > 0.001) {
+                    return totalA - totalB;
+                }
+
+                // Priority 2: Quantity of Most Expensive Items (Descending)
+                for (let i = 0; i <= len - 1; i++) {
+                    if (a[i] !== b[i]) {
+                        return b[i] - a[i];
+                    }
+                }
+                return 0;
+            });
+
+            displayResults(results, items);
         }
-      }
 
-      search(0, new Array(len).fill(0), 0);
-
-      // --- New Sorting Logic for Rows ---
-      results.sort((a, b) => {
-        // Priority 1: Total Price (Ascending)
-        const totalA = a[a.length - 1];
-        const totalB = b[b.length - 1];
-        if (Math.abs(totalA - totalB) > 0.001) {
-          return totalA - totalB;
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            el.textContent = msg;
+            el.style.display = 'block';
         }
 
-        // Priority 2: Quantity of Most Expensive Items (Descending)
-        for (let i = 0; i <= len - 1; i++) {
-          if (a[i] !== b[i]) {
-            return b[i] - a[i]; 
-          }
+        function displayResults(results, items) {
+            const section = document.getElementById('resultsSection');
+            const summary = document.getElementById('resultsSummary');
+            const table = document.getElementById('resultsTable');
+
+            section.style.display = 'block';
+
+            if (results.length === 0) {
+                summary.innerHTML = "未找到满足条件的方案";
+                summary.style.backgroundColor = "var(--error-bg)";
+                summary.style.color = "var(--error-text)";
+                table.innerHTML = '';
+                return;
+            }
+
+            summary.innerHTML = `成功找到 <b>${results.length}</b> 种方案`;
+            summary.style.backgroundColor = "var(--success-bg)";
+            summary.style.color = "var(--success-text)";
+
+            // Build Table Headers
+            let headerHTML = '<thead><tr>';
+            items.forEach(item => {
+                headerHTML += `<th>${item.name}<br><small style="font-weight:400; opacity:0.8;">¥${item.price}</small></th>`;
+            });
+            headerHTML += '<th>总价</th></tr></thead>';
+            table.innerHTML = headerHTML;
+
+            const tbody = document.createElement('tbody');
+            results.forEach(row => {
+                const tr = document.createElement('tr');
+                for (let i = 0; i < row.length - 1; i++) {
+                    const td = document.createElement('td');
+                    td.textContent = row[i];
+                    tr.appendChild(td);
+                }
+                const totalTd = document.createElement('td');
+                totalTd.innerHTML = `<b>${parseFloat(row[row.length - 1].toFixed(2))}</b>`;
+                tr.appendChild(totalTd);
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+
+            section.scrollIntoView({ behavior: 'smooth' });
         }
-        return 0;
-      });
-
-      displayResults(results, items);
-    }
-
-    function showError(msg) {
-      const el = document.getElementById('errorMsg');
-      el.textContent = msg;
-      el.style.display = 'block';
-    }
-
-    function displayResults(results, items) {
-      const section = document.getElementById('resultsSection');
-      const summary = document.getElementById('resultsSummary');
-      const table = document.getElementById('resultsTable');
-      
-      section.style.display = 'block';
-      
-      if (results.length === 0) {
-        summary.innerHTML = "未找到满足条件的方案";
-        summary.style.backgroundColor = "var(--error-bg)";
-        summary.style.color = "var(--error-text)";
-        table.innerHTML = '';
-        return;
-      }
-
-      summary.innerHTML = `成功找到 <b>${results.length}</b> 种方案`;
-      summary.style.backgroundColor = "var(--success-bg)";
-      summary.style.color = "var(--success-text)";
-
-      // Build Table Headers
-      let headerHTML = '<thead><tr>';
-      items.forEach(item => { 
-        headerHTML += `<th>${item.name}<br><small style="font-weight:400; opacity:0.8;">¥${item.price}</small></th>`; 
-      });
-      headerHTML += '<th>总价</th></tr></thead>';
-      table.innerHTML = headerHTML;
-
-      const tbody = document.createElement('tbody');
-      results.forEach(row => {
-        const tr = document.createElement('tr');
-        for (let i = 0; i < row.length - 1; i++) {
-          const td = document.createElement('td');
-          td.textContent = row[i];
-          tr.appendChild(td);
-        }
-        const totalTd = document.createElement('td');
-        totalTd.innerHTML = `<b>¥${row[row.length-1].toFixed(2)}</b>`;
-        tr.appendChild(totalTd);
-        tbody.appendChild(tr);
-      });
-      table.appendChild(tbody);
-      
-      section.scrollIntoView({ behavior: 'smooth' });
-    }
-  </script>
+    </script>
 </body>
+
 </html>
