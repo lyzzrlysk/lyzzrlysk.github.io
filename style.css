@@ -311,22 +311,26 @@ table {
   width: 100%;
   border-collapse: collapse;
   background: var(--row-bg);
-  min-width: 600px;
+  /* Removed min-width so it doesn't force scroll on mobile unless necessary */
+  font-size: 0.9rem; /* Slightly smaller text for compactness */
 }
 
 th {
   background: var(--primary-color);
   color: white;
-  padding: 16px;
+  padding: 8px 4px; /* Much smaller padding */
   text-align: center;
   font-weight: 600;
   position: sticky;
   top: 0;
   z-index: 10;
+  /* Allow headers to wrap to save width */
+  white-space: normal; 
+  line-height: 1.2;
 }
 
 td {
-  padding: 14px;
+  padding: 8px 4px; /* Much smaller padding */
   text-align: center;
   border-bottom: 1px solid var(--input-bg);
   color: var(--text-color);
@@ -372,34 +376,57 @@ tr:last-child td {
 }
 
 /* --- Mobile Responsiveness --- */
+/* --- Mobile Responsiveness --- */
 @media (max-width: 600px) {
   .container {
-    padding: 25px 20px;
+    padding: 25px 15px; /* Reduced side padding for more screen space */
     border-radius: 20px;
   }
   
+  /* Default behavior for rows (like the settings row) */
   .input-row, .target-row {
     flex-direction: column;
     align-items: stretch;
-    gap: 15px;
+    gap: 10px;
   }
-  
-  .btn-remove {
-    background-color: var(--error-bg);
-    margin-top: 5px;
+
+  /* --- SPECIAL GRID LAYOUT FOR ITEMS --- */
+  /* This specifically targets the Item rows to make them compact */
+  .item-row {
+    display: grid !important; /* Override flex */
+    /* Column 1 takes 60%, Column 2 takes remaining space */
+    grid-template-columns: 1.5fr 1fr; 
+    gap: 10px;
+    align-items: end; /* Align bottoms so inputs line up even with labels */
+  }
+
+  /* 1. Name Input (Top Left) */
+  .item-row .input-group:nth-child(1) {
+    grid-column: 1 / 2;
+  }
+
+  /* 2. Price Input (Top Right) */
+  .item-row .input-group:nth-child(2) {
+    grid-column: 2 / 3;
+  }
+
+  /* 3. Quantity Input (Bottom Left) */
+  .item-row .input-group:nth-child(3) {
+    grid-column: 1 / 2;
+  }
+
+  /* 4. Delete Button (Bottom Right) */
+  .item-row .btn-remove {
+    grid-column: 2 / 3;
+    width: 100%;
+    margin-top: 0;
+    height: 46px; /* Match height of inputs roughly */
+    background-color: var(--error-bg); /* Make it more visible on mobile */
     border-radius: 8px;
-    padding: 12px;
-    text-align: center;
   }
   
   h1 { font-size: 1.6rem; }
   
-  .theme-toggle {
-    top: 15px;
-    right: 15px;
-  }
-  .btn-home {
-    top: 15px;
-    left: 15px;
-  }
+  .theme-toggle { top: 15px; right: 15px; }
+  .btn-home { top: 15px; left: 15px; }
 }
