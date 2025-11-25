@@ -1,191 +1,106 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>满赠计算器</title>
+  <link rel="stylesheet" href="style.css">
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 40px;
-      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .menu-card {
+      background: var(--row-bg);
+      padding: 25px;
+      border-radius: 16px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-card);
+      transition: transform 0.2s;
     }
-
-    .container {
-      background: white;
-      border-radius: 15px;
-      box-shadow: 0 10px 30px rgba(33, 150, 243, 0.2);
-      padding: 50px;
-      text-align: center;
-      border: 1px solid #e1f5fe;
-      max-width: 500px;
+    .menu-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-soft);
+    }
+    .menu-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 8px;
+    }
+    .menu-desc {
+      font-size: 0.9rem;
+      color: var(--text-light);
+      margin-bottom: 20px;
+    }
+    .btn-link {
       width: 100%;
+      background: var(--input-bg);
+      color: var(--text-color);
+      justify-content: space-between;
+      padding: 16px 20px;
     }
-
-    h1 {
-      color: #1565c0;
-      margin-bottom: 40px;
-      font-size: 2.2em;
-      text-shadow: 0 2px 4px rgba(21, 101, 192, 0.1);
-    }
-
-    .input-group {
-      margin: 30px 0;
-    }
-
-    input {
-      padding: 15px 20px;
-      font-size: 18px;
-      border: 2px solid #e1f5fe;
-      border-radius: 8px;
-      width: 200px;
-      text-align: center;
-      transition: all 0.3s ease;
-    }
-
-    input:focus {
-      outline: none;
-      border-color: #42a5f5;
-      box-shadow: 0 0 0 3px rgba(66, 165, 245, 0.1);
-    }
-
-    input::placeholder {
-      color: #90caf9;
-    }
-
-    button {
-      padding: 15px 40px;
-      font-size: 18px;
-      background: linear-gradient(135deg, #42a5f5, #1976d2);
+    .btn-link:hover {
+      background: var(--primary-color);
       color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(66, 165, 245, 0.4);
-      font-weight: 600;
-      margin: 10px;
-      width: 220px;
     }
-
-    button:hover {
-      background: linear-gradient(135deg, #1e88e5, #1565c0);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(66, 165, 245, 0.6);
-    }
-
-    .instructions {
-      color: #546e7a;
-      font-size: 1.1em;
-      margin-bottom: 30px;
-      line-height: 1.5;
-    }
-
-    .step-indicator {
-      background: #e3f2fd;
-      color: #1976d2;
-      padding: 8px 20px;
-      border-radius: 20px;
-      font-weight: 600;
-      display: inline-block;
-      margin-bottom: 20px;
-      border: 2px solid #bbdefb;
-    }
-
-    .calculator-options {
-      margin: 30px 0;
-    }
-
-    .option-title {
-      color: #1565c0;
-      font-size: 1.2em;
-      font-weight: 600;
-      margin-bottom: 15px;
-    }
-
-    .option-description {
-      color: #546e7a;
-      font-size: 0.9em;
-      margin-bottom: 20px;
-      line-height: 1.4;
-    }
-
-    .split-btn {
-      background: linear-gradient(135deg, #ba68c8, #8e24aa) !important;
-    }
-
-    .split-btn:hover {
-      background: linear-gradient(135deg, #ab47bc, #6a1b9a) !important;
+    .btn-link::after {
+      content: '→';
+      font-weight: bold;
     }
   </style>
 </head>
-
 <body>
-  <div class="container">
-    <!-- <div class="step-indicator"></div> -->
+  <div class="container" style="max-width: 600px;">
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" aria-label="Toggle Dark Mode">🌙</button>
+    
     <h1>满赠计算器</h1>
+    <p style="text-align: center; color: var(--text-light); margin-bottom: 40px;">
+      请选择你需要的计算器
+    </p>
 
-    <div class="instructions">
-      请选择你需要的计算器类型
+    <!-- Fill Calculator -->
+    <div class="menu-card">
+      <div class="menu-title">凑单计算器</div>
+      <div class="menu-desc">根据商品单价和最少数量，计算最接近满赠金额的组合方案。</div>
+      <a href="凑单计算器.html">
+        <button class="btn-link">开始凑单</button>
+      </a>
     </div>
 
-    <div class="calculator-options">
-      <div class="option-title">凑单计算器</div>
-      <div class="option-description">
-        选择想买的单品，然后算出最接近满赠金额的方案。
-      </div>
-
-      <button onclick="goToFillCalculator()">用凑单计算器</button>
+    <!-- Split Calculator -->
+    <div class="menu-card">
+      <div class="menu-title">拆单计算器</div>
+      <div class="menu-desc">将大量商品拆分为多个<b>相同金额</b>的目标订单。</div>
+      <a href="拆单计算器.html">
+        <button class="btn-link">开始拆单</button>
+      </a>
     </div>
 
-    <div style="margin: 30px 0; border-top: 2px solid #e3f2fd; padding-top: 30px;">
-      <div class="option-title">拆单计算器</div>
-      <div class="option-description">
-        选好想买的谷子总数量和每一单的金额，<br>
-        把大量谷子拆分成接近<b>同一满赠金额</b>的订单。
-      </div>
+    <!-- Multi-Split Calculator -->
+    <div class="menu-card">
+      <div class="menu-title">拆多种单计算器</div>
+      <div class="menu-desc">将大量商品拆分为多个<b>不同金额</b>的目标订单。</div>
+      <a href="拆单计算器gamma.html">
+        <button class="btn-link">开始拆多种单</button>
+      </a>
+    </div>
 
-      <button onclick="goToSplitCalculator()" class="split-btn">用拆单计算器</button>
+    <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px dashed rgba(140, 158, 255, 0.3); font-size: 0.85rem; color: var(--text-light); line-height: 1.8;">
+      遇到Bug或有建议？请联系 <a href="http://xhslink.com/o/2x2YmjdAGOo" target="_blank" style="color: var(--primary-color); font-weight: 600;">小红书咋肥四鸭</a>💜<br>
+      觉得好用？<a href="support.html" style="color: var(--primary-color); font-weight: 600;">支持作者</a>
+    </div>
+  </div>
 
-      <div style="margin: 30px 0; border-top: 2px solid #e3f2fd; padding-top: 30px;">
-        <div class="option-title">拆多种单计算器</div>
-        <div class="option-description">
-          选好想买的谷子总数量和每一单的金额，<br>
-          把大量谷子拆分成接近<b>不同满赠金额</b>的订单。
-        </div>
-
-        <button onclick="goToMultiSplitCalculator()" class="split-btn">用拆多种单计算器</button>
-        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e3f2fd; text-align: center;">
-          <p style="color: #666; font-size: 0.9em; margin: 0;">
-            遇到了bug或者想给一点建议？
-            <br>请在
-            <a href="http://xhslink.com/o/2x2YmjdAGOo" target="_blank" style="color: #42a5f5; text-decoration: none;">
-              小红书咋肥四鸭
-            </a>联系我💜
-          </p>
-        </div>
-      </div>
-
-      <script>
-        function goToFillCalculator() {
-          window.location.href = "凑单计算器.html";
-        }
-
-        function goToSplitCalculator() {
-          window.location.href = "拆单计算器.html";
-        }
-        function goToMultiSplitCalculator() {
-          window.location.href = "拆单计算器gamma.html";
-        }
-
-        // Focus on input when page loads
-        document.getElementById('num_prices').focus();
-      </script>
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      document.getElementById('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
+    }
+    
+    // Load saved theme on init
+    const saved = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', saved);
+    document.getElementById('themeBtn').textContent = saved === 'dark' ? '☀️' : '🌙';
+  </script>
 </body>
-
 </html>

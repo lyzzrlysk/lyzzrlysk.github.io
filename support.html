@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>支持作者</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .support-container {
+      text-align: center;
+      max-width: 400px; /* Narrower container for better text readability */
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    .qr-image {
+      width: 100%;
+      max-width: 300px; /* Smaller image size */
+      height: auto;
+      border-radius: 16px;
+      box-shadow: var(--shadow-soft);
+      margin-top: 20px;
+      transition: transform 0.3s ease;
+    }
+    .qr-image:hover {
+      transform: scale(1.02);
+    }
+    /* Ensure home button is positioned relative to this container if needed, 
+       but absolute positioning works relative to .container as per style.css */
+  </style>
+</head>
+<body>
+  <div class="container support-container">
+    <!-- Circular Home Button matching other pages -->
+    <a href="index.html" class="btn-home" aria-label="Home">🏠</a>
+    
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+    
+    <h1>感谢支持</h1>
+    <p style="color: var(--text-color); margin-bottom: 20px; font-size: 0.95rem; line-height: 1.6;">
+      很高兴计算器对您有帮助！<br>
+      如果您喜欢计算器，可以通过下方二维码打赏 💜
+    </p>
+    
+    <img src="qrcode.jpg" alt="Support QR Code" class="qr-image">
+    
+  </div>
+
+  <script>
+    // --- Shared Theme Logic ---
+    function toggleTheme() {
+      const html = document.documentElement;
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      document.getElementById('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
+    }
+    
+    // Load saved theme on init
+    const saved = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', saved);
+    document.getElementById('themeBtn').textContent = saved === 'dark' ? '☀️' : '🌙';
+  </script>
+</body>
+</html>
