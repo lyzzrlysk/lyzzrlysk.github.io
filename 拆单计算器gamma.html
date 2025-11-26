@@ -1,81 +1,35 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>拆多种单计算器</title>
   <link rel="stylesheet" href="style.css">
-  <style>
-    /* Unique styles for the Gamma Layout */
-    .scheme-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 15px;
-      margin-bottom: 30px;
-    }
-    .scheme-card {
-      background: var(--row-bg);
-      padding: 20px;
-      border-radius: 16px;
-      cursor: pointer;
-      box-shadow: var(--shadow-card);
-      border: 2px solid transparent;
-      transition: all 0.2s;
-    }
-    .scheme-card:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow-soft);
-    }
-    .scheme-card.active {
-      border-color: var(--primary-color);
-      background: var(--info-bg);
-    }
-    .scheme-name {
-      font-weight: 700;
-      color: var(--primary-color);
-      margin-bottom: 8px;
-    }
-    .scheme-stat {
-      font-size: 0.9rem;
-      color: var(--text-color);
-      margin-bottom: 4px;
-    }
-    .res-tag { 
-      background: rgba(140, 158, 255, 0.1); 
-      padding: 4px 10px; 
-      border-radius: 8px; 
-      font-size: 0.9rem; 
-      color: var(--text-color);
-      border: 1px solid rgba(140, 158, 255, 0.2);
-    }
-  </style>
 </head>
+
 <body>
   <div class="container">
-    <!-- Circular Home Button -->
     <a href="index.html" class="btn-home" aria-label="Home">🏠</a>
-    
+
     <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
 
     <h1>拆多种单计算器</h1>
-    
-    <!-- Standardized Info Box -->
+
     <div class="info-box">
       <div>
         <strong>使用说明：</strong> 输入所有商品的单价、数量、目标单笔金额、目标单数，计算器会将商品拆分成尽可能多的订单。
       </div>
     </div>
-    
-    <!-- Step 1: Inventory -->
+
     <div class="section-title">第一步：商品库存</div>
     <div id="items-container"></div>
     <button class="btn-add" onclick="addItemRow()">+ 添加一行商品</button>
 
-    <!-- Step 2: Targets -->
     <div class="section-title">第二步：设置目标订单</div>
     <div id="targetContainer"></div>
     <button class="btn-add" onclick="addTargetRow()">+ 添加目标金额</button>
-    
+
     <div class="input-row" style="margin-top: 20px; background: var(--card-bg); box-shadow:var(--shadow-card);">
       <div class="input-group">
         <label>统一允许误差 (¥)</label>
@@ -84,16 +38,21 @@
     </div>
 
     <button class="btn-primary" onclick="calculate()">计算最佳方案</button>
-    <div id="errorMsg" style="display:none; margin-top:20px; padding:15px; background:var(--error-bg); color:var(--error-text); border-radius:12px; text-align:center;"></div>
+    <div id="errorMsg"
+      style="display:none; margin-top:20px; padding:15px; background:var(--error-bg); color:var(--error-text); border-radius:12px; text-align:center;">
+    </div>
 
-    <!-- Results -->
     <div id="resultsSection" class="results-area">
       <h2>计算结果</h2>
-      <p style="color:var(--text-light); margin-bottom:15px; font-size:0.9rem;">点击下方卡片查看不同算法的分配结果：</p>
-      
+      <p style="color:var(--text-light); margin-bottom:15px; font-size:0.9rem;">
+        已通过大量随机模拟寻找最优解。点击下方卡片查看不同策略的结果：
+      </p>
+
       <div id="schemeComparison" class="scheme-grid"></div>
-      
+
       <div id="detailedResults"></div>
+
+      <button class="btn-scroll-top" onclick="window.scrollTo({top:0, behavior:'smooth'})">↑</button>
     </div>
   </div>
 
@@ -148,33 +107,33 @@
         const data = JSON.parse(saved);
         const iContainer = document.getElementById('items-container');
         iContainer.innerHTML = '';
-        if(data.items && data.items.length) {
+        if (data.items && data.items.length) {
           data.items.forEach(item => addItemRow(item.name, item.price, item.qty));
         } else {
-          addItemRow();
+          addItemRow(); addItemRow();
         }
-        
+
         const tContainer = document.getElementById('targetContainer');
         tContainer.innerHTML = '';
-        if(data.targets && data.targets.length) {
+        if (data.targets && data.targets.length) {
           data.targets.forEach(t => addTargetRow(t.price, t.count));
         } else {
           addTargetRow();
         }
-        
+
         document.getElementById('errt').value = data.errt || 5;
       } else {
-        addItemRow(); 
+        addItemRow(); addItemRow();
         addTargetRow();
       }
     }
 
-    function addItemRow(name='', price='', qty='') {
+    function addItemRow(name = '', price = '', qty = '') {
       const container = document.getElementById('items-container');
       const div = document.createElement('div');
       div.className = 'input-row item-row';
       div.innerHTML = `
-        <div class="input-group" style="flex: 1.5;">
+        <div class="input-group">
           <label>商品名</label>
           <input type="text" class="name-input" placeholder="例如: 吧唧" value="${name}" onchange="saveData()">
         </div>
@@ -192,7 +151,7 @@
       saveData();
     }
 
-    function addTargetRow(price='', count='1') {
+    function addTargetRow(price = '', count = '1') {
       const container = document.getElementById('targetContainer');
       const div = document.createElement('div');
       div.className = 'target-row';
@@ -211,7 +170,18 @@
       saveData();
     }
 
-    // --- Logic ---
+    // --- Helper: Shuffle ---
+    function shuffle(array) {
+      let currentIndex = array.length, randomIndex;
+      while (currentIndex != 0) {
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+      }
+      return array;
+    }
+
+    // --- Main Calculation Logic ---
     function calculate() {
       const errorEl = document.getElementById('errorMsg');
       errorEl.style.display = 'none';
@@ -222,12 +192,8 @@
         const n = row.querySelector('.name-input').value.trim();
         const p = parseFloat(row.querySelector('.price-input').value);
         const q = parseInt(row.querySelector('.qty-input').value);
-        if(!isNaN(p) && p > 0 && !isNaN(q) && q > 0) {
-          items.push({
-            name: n || `¥${p}`,
-            price: p,
-            qty: q
-          });
+        if (!isNaN(p) && p > 0 && !isNaN(q) && q > 0) {
+          items.push({ name: n || `¥${p}`, price: p, qty: q });
         }
       });
 
@@ -235,50 +201,170 @@
       document.querySelectorAll('.target-row').forEach(row => {
         const p = parseFloat(row.querySelector('.t-price').value);
         const c = parseInt(row.querySelector('.t-count').value);
-        if(p > 0 && c > 0) {
-          for(let i=0; i<c; i++) targets.push(p);
+        if (!isNaN(p) && p > 0 && !isNaN(c) && c > 0) {
+          for (let i = 0; i < c; i++) targets.push(p);
         }
       });
-      
+
       const errt = parseFloat(document.getElementById('errt').value) || 0;
 
-      if(!items.length) return showError("请输入商品");
-      if(!targets.length) return showError("请输入目标");
+      if (!items.length) return showError("请输入商品");
+      if (!targets.length) return showError("请输入目标");
 
-      window.currentItems = items; // for display
+      window.currentItems = items; // Store for display
 
       const prices = items.map(i => i.price);
       const inventory = items.map(i => i.qty);
 
-      // 2. Run 3 Schemes
-      // Scheme A: Input order
-      const schemeA = runScheme(targets, [...inventory], prices, "方案 A (输入顺序)", errt);
-      // Scheme B: Large targets first
-      const schemeB = runScheme([...targets].sort((a,b)=>b-a), [...inventory], prices, "方案 B (大额优先)", errt);
-      
-      // Scheme C: Random shuffle loop
-      let bestSchemeC = null;
-      let bestCLeftover = Infinity;
-      let bestCSuccess = -1;
+      // --- Simulation Config ---
+      // Scheme A: Fixed Targets (Input), Randomized Items, 200ms
+      const schemeA = runSimulation(
+        [...targets],
+        inventory, prices, 200,
+        false, // Don't randomize target order
+        "方案 A (输入顺序)"
+      );
 
-      // Iterate based on number of targets
-      const trials = Math.max(95, targets.length * 5); 
-      for(let i=0; i<trials; i++) {
-        // Shuffle a copy of targets
-        const shuffledTargets = [...targets].sort(() => Math.random() - 0.5);
-        const scheme = runScheme(shuffledTargets, [...inventory], prices, "方案 C (随机优化)", errt);
-        
-        // Pick best based on Success Count then Leftover Value
-        if (!bestSchemeC || 
-            scheme.successCount > bestCSuccess || 
-            (scheme.successCount === bestCSuccess && scheme.leftVal < bestCLeftover)) {
-          bestSchemeC = scheme;
-          bestCSuccess = scheme.successCount;
-          bestCLeftover = scheme.leftVal;
+      // Scheme B: Fixed Targets (Sorted), Randomized Items, 200ms
+      const targetsDesc = [...targets].sort((a, b) => b - a);
+      const schemeB = runSimulation(
+        targetsDesc,
+        inventory, prices, 200,
+        false, // Don't randomize target order
+        "方案 B (大额优先)"
+      );
+
+      // Scheme C: Random Targets, Random Items, 500ms
+      const schemeC = runSimulation(
+        [...targets],
+        inventory, prices, 600,
+        true, // Randomize target order
+        "方案 C (随机优化)"
+      );
+
+      displaySchemes([schemeA, schemeB, schemeC]);
+    }
+
+    function runSimulation(baseTargets, baseInventory, prices, durationMs, shuffleTargets, name) {
+      const startTime = Date.now();
+      let trials = 0;
+
+      // Initialize best result with a "worst case" structure
+      let bestResult = {
+        name: name,
+        successCount: -1, // Start at -1 so any 0+ result overwrites it
+        results: [],
+        leftVal: Infinity,
+        leftoverItems: [...baseInventory],
+        trials: 0
+      };
+
+      const errt = parseFloat(document.getElementById('errt').value) || 0;
+
+      // Run loop at least once
+      while (Date.now() - startTime < durationMs || trials === 0) {
+        trials++;
+
+        let currentTargets = [...baseTargets];
+        if (shuffleTargets && trials > 1) {
+          shuffle(currentTargets);
+        }
+
+        let currentInv = [...baseInventory];
+        let successes = 0;
+        let currentRunResults = [];
+
+        // Determine Item Priority for this run
+        let itemIndices = Array.from({ length: prices.length }, (_, i) => i);
+        if (trials === 1) {
+          // First run always purely greedy (Expensive First)
+          itemIndices.sort((a, b) => prices[b] - prices[a]);
+        } else {
+          // Subsequent runs: Randomize item preference
+          shuffle(itemIndices);
+        }
+
+        // Process all targets in the specific order
+        currentTargets.forEach(t => {
+          const combo = findCombo(prices, currentInv, t, errt, itemIndices);
+          if (combo) {
+            successes++;
+            currentRunResults.push({ success: true, target: t, items: combo.items, total: combo.total });
+            // Deduct items from current inventory
+            combo.items.forEach((c, idx) => currentInv[idx] -= c);
+          } else {
+            currentRunResults.push({ success: false, target: t });
+          }
+        });
+
+        const leftVal = currentInv.reduce((s, c, i) => s + c * prices[i], 0);
+
+        // Compare against best
+        // Update if more successes, OR same successes but less leftovers
+        if (successes > bestResult.successCount ||
+          (successes === bestResult.successCount && leftVal < bestResult.leftVal)) {
+
+          bestResult = {
+            name: name,
+            successCount: successes,
+            results: currentRunResults,
+            leftVal: leftVal,
+            leftoverItems: currentInv,
+            trials: trials
+          };
         }
       }
 
-      displayResults([schemeA, schemeB, bestSchemeC]);
+      bestResult.trials = trials;
+      return bestResult;
+    }
+
+    function findCombo(prices, inventory, target, errt, indices) {
+      let best = null;
+      let minDiff = Infinity;
+
+      // Recursive Search
+      function search(idx, currentItems, currentSum) {
+        // 1. Valid Solution Check
+        // We check this at the very start of every node to ensure we don't skip valid paths
+        if (currentSum >= target && currentSum <= target + errt) {
+          const diff = currentSum - target;
+          if (diff < minDiff) {
+            minDiff = diff;
+            best = [...currentItems];
+          }
+          if (minDiff === 0) return; // Perfect match found, stop searching this branch
+        }
+
+        // 2. Stop Checks
+        // If we have already found a perfect match globally, stop everything
+        if (best && minDiff === 0) return;
+
+        // If we exceeded the limit, stop
+        if (currentSum > target + errt) return;
+
+        // If we ran out of item types to check, stop
+        if (idx >= indices.length) return;
+
+        // 3. Recursive Loop
+        const pIdx = indices[idx]; // Get the actual item index from our shuffled list
+        const p = prices[pIdx];
+
+        // Calculate max quantity we can take of this item
+        const maxCanTake = Math.min(inventory[pIdx], Math.floor((target + errt - currentSum) / p));
+
+        for (let q = maxCanTake; q >= 0; q--) {
+          currentItems[pIdx] = q;
+          search(idx + 1, currentItems, currentSum + (q * p));
+          currentItems[pIdx] = 0; // Backtrack: Reset for next iteration
+
+          if (minDiff === 0) break; // Optimization: If perfect match found, break loop
+        }
+      }
+
+      search(0, new Array(prices.length).fill(0), 0);
+
+      return best ? { items: best, total: best.reduce((s, c, i) => s + c * prices[i], 0) } : null;
     }
 
     function showError(msg) {
@@ -287,147 +373,176 @@
       el.style.display = 'block';
     }
 
-    function runScheme(targetList, inv, prices, name, errt) {
-      let currentInv = [...inv];
-      let successCount = 0;
-      let results = [];
-      
-      targetList.forEach(t => {
-        const combo = findCombo(prices, currentInv, t, errt);
-        if(combo) {
-          successCount++;
-          results.push({success: true, target: t, items: combo.items, total: combo.total});
-          combo.items.forEach((c, i) => currentInv[i] -= c);
-        } else {
-          results.push({success: false, target: t});
-        }
-      });
-      
-      const leftVal = currentInv.reduce((s, c, i) => s + c * prices[i], 0);
-      return { name, successCount, results, leftVal, leftoverItems: currentInv };
-    }
-
-    function findCombo(prices, inventory, target, errt) {
-      const indices = prices.map((_, i) => i).sort((a,b) => prices[b] - prices[a]);
-      let best = null;
-      let minDiff = Infinity;
-      
-      function search(idx, currentItems, currentSum) {
-        if (best === 0) return; 
-
-        if(currentSum >= target && currentSum <= target + errt) {
-           if(currentSum - target < minDiff) {
-             minDiff = currentSum - target;
-             best = [...currentItems];
-           }
-           return;
-        }
-        if(currentSum > target + errt || idx >= indices.length) return;
-        
-        const pIdx = indices[idx];
-        const max = Math.min(inventory[pIdx], Math.floor((target+errt-currentSum)/prices[pIdx]));
-        
-        for(let q=max; q>=0; q--) {
-          currentItems[pIdx] = q;
-          search(idx+1, currentItems, currentSum + q*prices[pIdx]);
-          currentItems[pIdx] = 0;
-          if(minDiff === 0) break;
-        }
-      }
-      search(0, new Array(prices.length).fill(0), 0);
-      
-      return best ? {items: best, total: best.reduce((s,c,i)=>s+c*prices[i],0)} : null;
-    }
-
-    // --- Display ---
-    function displayResults(schemes) {
+    // --- Display Logic ---
+    function displaySchemes(schemes) {
       const container = document.getElementById('schemeComparison');
       container.innerHTML = '';
-      
-      // Sort: Most successes, then least leftover value
-      schemes.sort((a,b) => b.successCount - a.successCount || a.leftVal - b.leftVal);
+
+      // Sort schemes: Most success -> Least Leftover
+      schemes.sort((a, b) => b.successCount - a.successCount || a.leftVal - b.leftVal);
       window.savedSchemes = schemes;
 
       schemes.forEach((s, idx) => {
         container.innerHTML += `
-          <div class="scheme-card ${idx===0?'active':''}" onclick="showSchemeDetails(${idx}); highlightCard(this)">
+          <div class="scheme-card ${idx === 0 ? 'active' : ''}" onclick="showSchemeDetails(${idx}); highlightCard(this)">
             <div class="scheme-name">${s.name}</div>
             <div class="scheme-stat">成功: ${s.successCount}/${s.results.length}</div>
-            <div class="scheme-stat">剩余: ¥${s.leftVal.toFixed(2)}</div>
+            <div class="scheme-stat">剩余: ¥${parseFloat(s.leftVal.toFixed(2))}</div>
           </div>
         `;
       });
-      
-      showSchemeDetails(0);
+
+      if (schemes.length > 0) {
+        showSchemeDetails(0);
+      }
+
       document.getElementById('resultsSection').style.display = 'block';
       document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
     }
-    
-    window.highlightCard = function(el) {
+
+    window.highlightCard = function (el) {
       document.querySelectorAll('.scheme-card').forEach(c => c.classList.remove('active'));
       el.classList.add('active');
     }
-    
-    window.showSchemeDetails = function(idx) {
-       const s = window.savedSchemes[idx];
-       const items = window.currentItems;
-       let html = `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--input-bg); padding-bottom:15px; margin-top:0;">${s.name} 详情</h3>`;
-       
-       // Sort results: Descending Total Price
-       const sortedResults = [...s.results].sort((a, b) => {
-         if (a.success && !b.success) return -1;
-         if (!a.success && b.success) return 1;
-         return b.total - a.total; // Descending
-       });
 
-       sortedResults.forEach((r, i) => {
-         if(r.success) {
-           const itemsHtml = r.items.map((c, idx) => c > 0 ? `<span class="res-tag">${c} x ${items[idx].name} (¥${items[idx].price})</span>` : '').join('');
-           
-           html += `
+    window.showSchemeDetails = function (idx) {
+      const s = window.savedSchemes[idx];
+      const items = window.currentItems;
+      const container = document.getElementById('detailedResults');
+
+      // 1. Calculate Statistics
+      let totalItemsUsed = 0;
+      const usedCounts = new Array(items.length).fill(0);
+      let totalUsedVal = 0;
+
+      if (s.results) {
+        s.results.forEach(r => {
+          if (r.success) {
+            r.items.forEach((qty, i) => {
+              usedCounts[i] += qty;
+              totalItemsUsed += qty;
+              totalUsedVal += qty * items[i].price;
+            });
+          }
+        });
+      }
+
+      let totalLeftoverCount = 0;
+      s.leftoverItems.forEach(qty => totalLeftoverCount += qty);
+
+      // 2. Stats Dashboard
+      let html = `
+         <h3 style="color:var(--primary-color); border-bottom:1px solid var(--input-bg); padding-bottom:15px; margin-top:0;">${s.name} 详情</h3>
+         
+         <div class="stats-grid">
+           <div class="stat-card">
+             <div class="stat-val">${s.successCount} / ${s.results.length}</div>
+             <div class="stat-label">订单完成</div>
+           </div>
+           <div class="stat-card">
+             <div class="stat-val">${totalItemsUsed} / ${totalItemsUsed + totalLeftoverCount}</div>
+             <div class="stat-label">已用商品</div>
+           </div>
+           <div class="stat-card">
+             <div class="stat-val">¥${parseFloat(s.leftVal.toFixed(2))}</div>
+             <div class="stat-label">剩余价值</div>
+           </div>
+           <div class="stat-card sub-stat">
+             <div class="stat-val">${s.trials}</div>
+             <div class="stat-label">计算次数</div>
+           </div>
+         </div>
+       `;
+
+      // 3. Helper for Tables/Lists
+      function generateResponsiveSection(title, countsArray, totalVal) {
+        const headerHtml = items.map(i =>
+          `<th>${i.name}<br><small style="font-weight:400; opacity:0.8;">¥${i.price}</small></th>`
+        ).join('');
+
+        const rowHtml = countsArray.map(c => `<td>${c}</td>`).join('');
+
+        const tableHtml = `
+            <div class="table-responsive" style="margin-bottom: 20px;">
+              <table><thead><tr>${headerHtml}</tr></thead><tbody><tr>${rowHtml}</tr></tbody></table>
+            </div>
+          `;
+
+        // Mobile List
+        let mobileRows = '';
+        countsArray.forEach((count, idx) => {
+          if (count > 0) {
+            mobileRows += `
+                <div class="mobile-summary-row">
+                  <div>
+                    <span class="mobile-summary-name">${items[idx].name}</span>
+                    <span class="mobile-summary-price">¥${items[idx].price}</span>
+                  </div>
+                  <div style="font-weight:bold;">x ${count}</div>
+                </div>
+              `;
+          }
+        });
+        const mobileHtml = `<div class="mobile-summary-container">${mobileRows}</div>`;
+
+        return `
+            <h3 style="margin-bottom:10px; margin-top:20px; color:var(--primary-color);">
+              ${title} (总值: ¥${parseFloat(totalVal.toFixed(2))})
+            </h3>
+            ${tableHtml}
+            ${mobileHtml}
+          `;
+      }
+
+      // 4. Used Items
+      if (totalItemsUsed > 0) {
+        html += generateResponsiveSection("已用商品", usedCounts, totalUsedVal);
+      }
+
+      // 5. Leftover Items
+      if (s.leftVal > 0) {
+        html += generateResponsiveSection("剩余商品", s.leftoverItems, s.leftVal);
+      } else if (s.successCount === s.results.length) {
+        html += `<div class="summary-card" style="background:var(--success-bg); color:var(--success-text); margin-bottom:30px;">完美！所有商品已分配完毕。</div>`;
+      }
+
+      // 6. Orders List
+      html += `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--input-bg); padding-bottom:15px; margin-top:0;">订单列表</h3>`;
+
+      // Sort results: Success first, then by Total Value Descending
+      const sortedResults = [...s.results].sort((a, b) => {
+        if (a.success && !b.success) return -1;
+        if (!a.success && b.success) return 1;
+        return (b.total || 0) - (a.total || 0);
+      });
+
+      sortedResults.forEach((r, i) => {
+        if (r.success) {
+          const itemsHtml = r.items.map((c, idx) => c > 0 ? `<span class="res-tag">${c} x ${items[idx].name} (¥${items[idx].price})</span>` : '').join('');
+
+          html += `
              <div style="background:var(--row-bg); padding:20px; border-radius:16px; margin-bottom:15px; box-shadow:var(--shadow-card); border: 1px solid var(--input-bg);">
                <div style="font-weight:700; color:var(--primary-color); margin-bottom:10px; font-size:1.1rem;">
-                 📦 订单 ${i+1} <span style="color:var(--text-color); font-weight:400; font-size:0.9rem; float:right;">目标: ¥${r.target} | 实际: ¥${r.total.toFixed(2)}</span>
+                 📦 订单 ${i + 1}
+                 <span style="color:var(--text-color); font-weight:400; font-size:0.9rem; float:right;">
+                   目标: ¥${r.target} | 实际: ¥${parseFloat(r.total.toFixed(2))}
+                 </span>
                </div>
                <div style="display:flex; flex-wrap:wrap; gap:8px;">${itemsHtml}</div>
              </div>
            `;
-         } else {
-           html += `
-             <div style="background:var(--error-bg); color:var(--error-text); padding:20px; border-radius:16px; margin-bottom:15px; box-shadow:var(--shadow-card);">
-               <div style="font-weight:700;">⚠️ 订单 ${i+1} (目标 ¥${r.target})</div>
-               <div style="font-size:0.9rem;">无法组成符合条件的订单</div>
+        } else {
+          html += `
+             <div style="background:var(--error-bg); color:var(--error-text); padding:15px; border-radius:16px; margin-bottom:15px; box-shadow:var(--shadow-card); opacity:0.8;">
+               <div style="font-weight:700;">⚠️ 订单 #${i + 1} 失败</div>
+               <div style="font-size:0.9rem;">无法凑出目标金额 ¥${r.target}</div>
              </div>`;
-         }
-       });
-       
-       // Add Remaining Items Table
-       if (s.leftVal > 0 && s.leftoverItems) {
-         html += `
-           <h3 style="margin-top:30px; margin-bottom:15px;">剩余商品 (总值: ¥${s.leftVal.toFixed(2)})</h3>
-           <div class="table-responsive">
-             <table>
-               <tr>${items.map(i => `<th>${i.name}</th>`).join('')}</tr>
-               <tr>${s.leftoverItems.map(c => `<td>${c}</td>`).join('')}</tr>
-             </table>
-           </div>
-         `;
-       } else if (s.leftVal <= 0) {
-         html += `<div class="summary-card" style="background:var(--success-bg); color:var(--success-text); margin-top:30px;">🎉 完美！所有商品已分配完毕。</div>`;
-       }
+        }
+      });
 
-       // Inject styles for tags similar to Split Calculator
-       if(!document.getElementById('gamma-tag-style')) {
-         const style = document.createElement('style');
-         style.id = 'gamma-tag-style';
-         style.innerHTML = `
-           .tag { display:inline-block; background:var(--input-bg); padding:6px 12px; border-radius:20px; font-size:0.9rem; color:var(--text-color); }
-         `;
-         document.head.appendChild(style);
-       }
-
-       document.getElementById('detailedResults').innerHTML = html;
+      container.innerHTML = html;
     }
   </script>
 </body>
+
 </html>

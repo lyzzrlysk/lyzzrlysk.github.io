@@ -533,3 +533,146 @@ tr:last-child td {
     transform: scale(0.9);
   }
 }
+
+/* --- Result Stats Dashboard --- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.stat-card {
+  background: var(--info-bg); /* Light Blue background */
+  padding: 12px 8px;
+  border-radius: 12px;
+  text-align: center;
+  border: 1px solid rgba(140, 158, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.stat-val {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--primary-color);
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-color);
+  opacity: 0.8;
+  margin-top: 4px;
+}
+
+/* Make the computation count look slightly different (less important) */
+.stat-card.sub-stat {
+  background: var(--input-bg);
+  border-color: transparent;
+}
+.stat-card.sub-stat .stat-val {
+  color: var(--text-light);
+  font-size: 1.1rem;
+}
+
+/* --- Mobile Summary List (For Split Calculator) --- */
+.mobile-summary-container {
+  display: none; /* Hidden on Desktop */
+}
+
+.mobile-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--input-bg);
+  background: var(--row-bg);
+  color: var(--text-color);
+}
+
+.mobile-summary-row:first-child {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.mobile-summary-row:last-child {
+  border-bottom: none;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.mobile-summary-name {
+  font-weight: 500;
+}
+
+.mobile-summary-price {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  margin-left: 6px;
+}
+
+@media (max-width: 768px) {
+  /* On mobile, show this list */
+  .mobile-summary-container {
+    display: block;
+    margin-bottom: 25px;
+    box-shadow: var(--shadow-card);
+    border-radius: 12px;
+    border: 1px solid var(--input-bg);
+  }
+}
+
+/* --- Gamma Calculator Specifics (Scheme Cards) --- */
+.scheme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.scheme-card {
+  background: var(--row-bg);
+  padding: 20px;
+  border-radius: 16px;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  border: 2px solid transparent; /* Invisible border to prevent layout shift on hover */
+  transition: all 0.2s;
+}
+
+.scheme-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-soft);
+}
+
+.scheme-card.active {
+  border-color: var(--primary-color);
+  background: var(--info-bg);
+}
+
+.scheme-name {
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 8px;
+}
+
+.scheme-stat {
+  font-size: 0.9rem;
+  color: var(--text-color);
+  margin-bottom: 4px;
+}
+
+/* Result Tags (Small pills showing "2 x Item") */
+.res-tag { 
+  display: inline-block;
+  background: var(--input-bg); 
+  padding: 4px 10px; 
+  border-radius: 8px; 
+  font-size: 0.9rem; 
+  color: var(--text-color);
+  border: 1px solid rgba(140, 158, 255, 0.2);
+  margin-right: 5px;
+  margin-bottom: 5px;
+}

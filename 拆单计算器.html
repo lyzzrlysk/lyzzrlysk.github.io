@@ -1,20 +1,22 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>拆单计算器</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
   <div class="container">
     <!-- Circular Home Button -->
     <a href="index.html" class="btn-home" aria-label="Home">🏠</a>
-    
+
     <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
 
     <h1>拆单计算器</h1>
-    
+
     <div class="info-box">
       <div>
         <strong>使用说明：</strong> 输入所有商品的单价数量和目标单笔金额，计算器会将商品拆分成尽可能多的订单。
@@ -40,17 +42,19 @@
     </div>
 
     <button class="btn-primary" onclick="calculate()">开始拆单</button>
-    <div id="errorMsg" style="display:none; margin-top:20px; padding:15px; background:var(--error-bg); color:var(--error-text); border-radius:12px; text-align:center;"></div>
+    <div id="errorMsg"
+      style="display:none; margin-top:20px; padding:15px; background:var(--error-bg); color:var(--error-text); border-radius:12px; text-align:center;">
+    </div>
 
     <!-- Results -->
     <div id="resultsSection" class="results-area">
       <h2>计算结果</h2>
-      
+
       <div id="combinationsContainer"></div>
-      
+
       <div id="leftoverContainer" style="margin-top: 30px;"></div>
 
-      <button onclick="window.scrollTo({top:0, behavior:'smooth'})" style="background:var(--input-bg); color:var(--text-color); width:100%; margin-top:30px;">↑ 回到顶部</button>
+      <button class="btn-scroll-top" onclick="window.scrollTo({top:0, behavior:'smooth'})">↑</button>
     </div>
   </div>
 
@@ -96,10 +100,10 @@
       const saved = localStorage.getItem('split_calc_data');
       const container = document.getElementById('items-container');
       container.innerHTML = '';
-      
+
       if (saved) {
         const data = JSON.parse(saved);
-        if(data.items && data.items.length) {
+        if (data.items && data.items.length) {
           data.items.forEach(item => addItemRow(item.name, item.price, item.qty));
         } else {
           initEmptyRows();
@@ -115,7 +119,7 @@
       addItemRow(); addItemRow();
     }
 
-    function addItemRow(name='', price='', qty='') {
+    function addItemRow(name = '', price = '', qty = '') {
       const container = document.getElementById('items-container');
       const div = document.createElement('div');
       div.className = 'input-row item-row';
@@ -139,49 +143,20 @@
     }
 
     // --- Algorithm: Greedy Backtracking ---
-    function calculate() {
-      const errorEl = document.getElementById('errorMsg');
-      errorEl.style.display = 'none';
 
-      const items = [];
-      
-      document.querySelectorAll('.item-row').forEach(row => {
-        const n = row.querySelector('.name-input').value.trim();
-        const p = parseFloat(row.querySelector('.price-input').value);
-        const q = parseInt(row.querySelector('.qty-input').value);
-        if(!isNaN(p) && p > 0 && !isNaN(q) && q > 0) {
-          items.push({
-            name: n || `¥${p}`,
-            price: p,
-            qty: q
-          });
-        }
-      });
-
-      const target = parseFloat(document.getElementById('target').value);
-      const errt = parseFloat(document.getElementById('errt').value) || 0;
-
-      if(items.length === 0) return showError("请输入有效商品");
-      if(isNaN(target) || target <= 0) return showError("请输入目标金额");
-
-      const results = [];
-      let remaining = items.map(i => i.qty);
-      const prices = items.map(i => i.price);
-      let hasItems = true;
-
-      // Keep finding valid combos until we can't
-      while(hasItems) {
-        const combo = findCombo(prices, remaining, target, errt);
-        if(combo) {
-          results.push(combo);
-          combo.items.forEach((count, idx) => remaining[idx] -= count);
-        } else {
-          hasItems = false;
-        }
-        if(remaining.every(c => c === 0)) hasItems = false;
+    // Fisher-Yates Shuffle
+    function shuffle(array) {
+      let currentIndex = array.length, randomIndex;
+      // While there remain elements to shuffle.
+      while (currentIndex != 0) {
+        // Pick a remaining element.
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+        // And swap it with the current element.
+        [array[currentIndex], array[randomIndex]] = [
+          array[randomIndex], array[currentIndex]];
       }
-
-      displayResults(results, remaining, items);
+      return array;
     }
 
     function showError(msg) {
@@ -190,16 +165,110 @@
       el.style.display = 'block';
     }
 
-    function findCombo(prices, inventory, target, errt) {
-      // Sort items by price descending to try expensive items first
-      const indices = prices.map((_, i) => i).sort((a,b) => prices[b] - prices[a]);
+    function calculate() {
+      const errorEl = document.getElementById('errorMsg');
+      errorEl.style.display = 'none';
+
+      // 1. Parse Inputs
+      const items = [];
+      document.querySelectorAll('.item-row').forEach(row => {
+        const n = row.querySelector('.name-input').value.trim();
+        const p = parseFloat(row.querySelector('.price-input').value);
+        const q = parseInt(row.querySelector('.qty-input').value);
+        if (!isNaN(p) && p > 0 && !isNaN(q) && q > 0) {
+          items.push({ name: n || `¥${p}`, price: p, qty: q });
+        }
+      });
+
+      const target = parseFloat(document.getElementById('target').value);
+      const errt = parseFloat(document.getElementById('errt').value) || 0;
+
+      if (items.length === 0) return showError("请输入有效商品");
+      if (isNaN(target) || target <= 0) return showError("请输入目标金额");
+
+      // 2. Prepare Data for Simulation
+      const prices = items.map(i => i.price);
+      const baseInventory = items.map(i => i.qty);
+      const numItems = prices.length;
+
+      // 3. Monte Carlo Simulation Settings
+      const MAX_TIME_MS = 800; // Run for max 0.8 seconds
+      const startTime = Date.now();
+
+      let bestResult = null;
+      let maxOrders = -1;
+      let minLeftoverVal = Infinity;
+      let trials = 0;
+
+      // 4. The Loop
+      while (Date.now() - startTime < MAX_TIME_MS) {
+        trials++;
+
+        // A. Determine Search Order
+        // Run 1 is always "Greedy" (Sort by Price Descending) for a baseline
+        // Runs 2+ are "Randomized" (Shuffle the priority of items)
+        let searchOrder = Array.from({ length: numItems }, (_, i) => i);
+        if (trials === 1) {
+          searchOrder.sort((a, b) => prices[b] - prices[a]);
+        } else {
+          shuffle(searchOrder);
+        }
+
+        // B. Run Simulation
+        let currentInventory = [...baseInventory];
+        let currentOrders = [];
+        let canMakeMore = true;
+
+        while (canMakeMore) {
+          // Pass the randomized 'searchOrder' to findCombo
+          const combo = findCombo(prices, currentInventory, target, errt, searchOrder);
+
+          if (combo) {
+            currentOrders.push(combo);
+            // Deduct items
+            combo.items.forEach((count, idx) => currentInventory[idx] -= count);
+          } else {
+            canMakeMore = false;
+          }
+
+          // Optimization: If current inventory is all 0, stop
+          if (currentInventory.every(c => c === 0)) canMakeMore = false;
+        }
+
+        // C. Evaluate this Run
+        const leftoverVal = currentInventory.reduce((sum, count, i) => sum + (count * prices[i]), 0);
+
+        // Criteria: 1. More Orders = Better. 2. Tie-breaker: Less Leftover Value = Better.
+        if (currentOrders.length > maxOrders ||
+          (currentOrders.length === maxOrders && leftoverVal < minLeftoverVal)) {
+
+          maxOrders = currentOrders.length;
+          minLeftoverVal = leftoverVal;
+          bestResult = {
+            orders: currentOrders,
+            leftovers: currentInventory
+          };
+        }
+      }
+
+      console.log(`Ran ${trials} simulations.`); // Debug info
+
+      if (bestResult) {
+        displayResults(bestResult.orders, bestResult.leftovers, items, trials);
+      } else {
+        displayResults([], baseInventory, items, trials);
+      }
+    }
+    // Updated findCombo that accepts a specific 'indices' order
+    function findCombo(prices, inventory, target, errt, indices) {
       let bestCombo = null;
       let bestDiff = Infinity;
 
       function search(idx, currentItems, currentSum) {
-        if (bestDiff === 0) return;
+        if (bestDiff === 0) return; // Found perfect match
 
-        if(currentSum >= target && currentSum <= target + errt) {
+        // Check if valid match
+        if (currentSum >= target && currentSum <= target + errt) {
           if ((currentSum - target) < bestDiff) {
             bestDiff = currentSum - target;
             bestCombo = [...currentItems];
@@ -207,46 +276,152 @@
           return;
         }
 
-        if(currentSum > target + errt) return;
-        if(idx >= indices.length) return;
+        if (currentSum > target + errt) return;
+        if (idx >= indices.length) return;
 
-        const pIndex = indices[idx];
+        const pIndex = indices[idx]; // Use the shuffled index
         const p = prices[pIndex];
-        const maxCanTake = Math.min(inventory[pIndex], Math.floor((target + errt - currentSum)/p));
 
-        for(let q = maxCanTake; q >= 0; q--) {
+        // Heuristic: Don't search too deep if we are just randomizing
+        const maxCanTake = Math.min(inventory[pIndex], Math.floor((target + errt - currentSum) / p));
+
+        for (let q = maxCanTake; q >= 0; q--) {
           currentItems[pIndex] = q;
           search(idx + 1, currentItems, currentSum + (q * p));
           currentItems[pIndex] = 0; // Backtrack
-          if(bestDiff === 0) break; 
+          if (bestDiff === 0) break;
         }
       }
 
       search(0, new Array(prices.length).fill(0), 0);
-      
-      if(bestCombo) {
+
+      if (bestCombo) {
         const total = bestCombo.reduce((sum, c, i) => sum + c * prices[i], 0);
         return { items: bestCombo, total: total };
       }
       return null;
     }
 
-    function displayResults(results, leftovers, items) {
+    function displayResults(results, leftovers, items, trials) {
       const container = document.getElementById('combinationsContainer');
+      const leftDiv = document.getElementById('leftoverContainer');
+
+      // Clear containers
       container.innerHTML = '';
+      leftDiv.innerHTML = '';
+
       const section = document.getElementById('resultsSection');
       section.style.display = 'block';
-      
-      if(results.length === 0) {
-        container.innerHTML = '<div class="summary-card" style="background:var(--error-bg); color:var(--error-text);">无法组成任何符合条件的订单</div>';
+
+      // --- 1. Calculate Statistics & Per-Item Usage ---
+      const totalOrders = results.length;
+      const usedCounts = new Array(items.length).fill(0);
+      let totalItemsInOrders = 0;
+
+      results.forEach(order => {
+        order.items.forEach((qty, idx) => {
+          usedCounts[idx] += qty;
+          totalItemsInOrders += qty;
+        });
+      });
+
+      let totalUsedVal = 0;
+      let totalLeftoverCount = 0;
+      let totalLeftoverVal = 0;
+
+      usedCounts.forEach((qty, idx) => totalUsedVal += qty * items[idx].price);
+      leftovers.forEach((qty, idx) => {
+        totalLeftoverCount += qty;
+        totalLeftoverVal += qty * items[idx].price;
+      });
+
+      // --- 2. Helper to Generate Table + Mobile List ---
+      function generateResponsiveSection(title, countsArray, totalVal) {
+        // A. Desktop Table HTML
+        const headerHtml = items.map(i =>
+          `<th>${i.name}<br><small style="font-weight:400; opacity:0.8;">¥${i.price}</small></th>`
+        ).join('');
+
+        const rowHtml = countsArray.map(c => `<td>${c}</td>`).join('');
+
+        const tableHtml = `
+          <div class="table-responsive" style="margin-bottom: 20px;">
+            <table><thead><tr>${headerHtml}</tr></thead><tbody><tr>${rowHtml}</tr></tbody></table>
+          </div>
+        `;
+
+        // B. Mobile List HTML (Only show items with count > 0 to save space)
+        let mobileRows = '';
+        countsArray.forEach((count, idx) => {
+          if (count > 0) {
+            mobileRows += `
+              <div class="mobile-summary-row">
+                <div>
+                  <span class="mobile-summary-name">${items[idx].name}</span>
+                  <span class="mobile-summary-price">¥${items[idx].price}</span>
+                </div>
+                <div style="font-weight:bold;">x ${count}</div>
+              </div>
+            `;
+          }
+        });
+        const mobileHtml = `<div class="mobile-summary-container">${mobileRows}</div>`;
+
+        return `
+          <h3 style="margin-bottom:10px; margin-top:20px; color:var(--primary-color);">
+            ${title} (总值: ¥${parseFloat(totalVal.toFixed(2))})
+          </h3>
+          ${tableHtml}
+          ${mobileHtml}
+        `;
+      }
+
+      // --- 3. Build Main HTML ---
+      let htmlContent = `
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-val">${totalOrders}</div>
+            <div class="stat-label">成功拆单</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val">${totalItemsInOrders} / ${totalItemsInOrders+totalLeftoverCount}</div>
+            <div class="stat-label">已用商品</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val">¥${parseFloat(totalLeftoverVal.toFixed(2))}</div>
+            <div class="stat-label">剩余金额</div>
+          </div>
+          <div class="stat-card sub-stat">
+            <div class="stat-val">${trials || 0}</div>
+            <div class="stat-label">计算次数</div>
+          </div>
+        </div>
+      `;
+
+      // Add Used Items Section
+      if (totalItemsInOrders > 0) {
+        htmlContent += generateResponsiveSection("已用商品", usedCounts, totalUsedVal);
+      }
+
+      // Add Leftover Items Section
+      if (totalLeftoverVal > 0) {
+        htmlContent += generateResponsiveSection("剩余商品", leftovers, totalLeftoverVal);
+      } else if (results.length > 0) {
+        htmlContent += '<div class="summary-card" style="background:var(--success-bg); color:var(--success-text); margin-bottom:30px;">完美！所有商品已分配完毕。</div>';
+      }
+
+      // --- 4. Append Order Cards ---
+      if (results.length === 0) {
+        htmlContent += '<div class="summary-card" style="background:var(--error-bg); color:var(--error-text);">无法组成任何符合条件的订单</div>';
       } else {
+        htmlContent += `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--input-bg); padding-bottom:15px; margin-top:0;">订单详情</h3>`;
         results.forEach((r, i) => {
           let itemsHtml = r.items.map((c, idx) => c > 0 ? `<span class="tag">${c} x ${items[idx].name} (¥${items[idx].price})</span>` : '').join('');
-          
-          container.innerHTML += `
+
+          htmlContent += `
             <div style="background:var(--row-bg); padding:20px; border-radius:16px; margin-bottom:15px; box-shadow:var(--shadow-card); border: 1px solid var(--input-bg);">
               <div style="font-weight:700; color:var(--primary-color); margin-bottom:10px; font-size:1.1rem;">
-                📦 订单 ${i+1} <span style="color:var(--text-color); font-weight:400; font-size:0.9rem; float:right;">总价: ¥${r.total.toFixed(2)}</span>
+                📦 订单 ${i + 1} <span style="color:var(--text-color); font-weight:400; font-size:0.9rem; float:right;">总价: ¥${parseFloat(r.total.toFixed(2))}</span>
               </div>
               <div style="display:flex; flex-wrap:wrap; gap:8px;">${itemsHtml}</div>
             </div>
@@ -254,32 +429,19 @@
         });
       }
 
-      // Leftovers
-      const leftTotal = leftovers.reduce((sum, c, i) => sum + c * items[i].price, 0);
-      const leftDiv = document.getElementById('leftoverContainer');
-      
-      if(leftTotal > 0) {
-        leftDiv.innerHTML = `
-          <h3 style="margin-bottom:15px;">剩余商品 (总值: ¥${leftTotal.toFixed(2)})</h3>
-          <div class="table-responsive">
-            <table>
-              <tr>${items.map(i => `<th>${i.name}</th>`).join('')}</tr>
-              <tr>${leftovers.map(c => `<td>${c}</td>`).join('')}</tr>
-            </table>
-          </div>
-        `;
-      } else {
-        leftDiv.innerHTML = '<div class="summary-card" style="background:var(--success-bg); color:var(--success-text);">完美！所有商品已分配完毕。</div>';
-      }
-      
-      const style = document.createElement('style');
-      style.innerHTML = `
-        .tag { display:inline-block; background:var(--input-bg); padding:6px 12px; border-radius:20px; font-size:0.9rem; color:var(--text-color); }
-      `;
-      document.head.appendChild(style);
+      container.innerHTML = htmlContent;
 
-      section.scrollIntoView({behavior:'smooth'});
+      // Inject Tag Style
+      if (!document.getElementById('split-tag-style')) {
+        const style = document.createElement('style');
+        style.id = 'split-tag-style';
+        style.innerHTML = `.tag { display:inline-block; background:var(--input-bg); padding:6px 12px; border-radius:20px; font-size:0.9rem; color:var(--text-color); }`;
+        document.head.appendChild(style);
+      }
+
+      section.scrollIntoView({ behavior: 'smooth' });
     }
   </script>
 </body>
+
 </html>
