@@ -204,19 +204,25 @@
             function search(index, currentCounts, currentSum) {
                 if (limitReached) return;
 
-                // Check Limit
-                if (results.length >= MAX_RESULTS) {
-                    limitReached = true;
+
+                // Only check and add results when we have considered ALL items
+                if (index === len) {
+                    if (currentSum >= remainingMin && currentSum <= remainingMax) {
+                        // Check Limit
+                        if (results.length >= MAX_RESULTS) {
+                            limitReached = true;
+                            return;
+                        }
+
+                        const totalCounts = currentCounts.map((c, i) => c + minItems[i]);
+                        const totalVal = totalCounts.reduce((s, c, i) => s + c * prices[i], 0);
+                        results.push([...totalCounts, totalVal]);
+                    }
                     return;
                 }
 
-                if (currentSum >= remainingMin && currentSum <= remainingMax) {
-                    const totalCounts = currentCounts.map((c, i) => c + minItems[i]);
-                    const totalVal = totalCounts.reduce((s, c, i) => s + c * prices[i], 0);
-                    results.push([...totalCounts, totalVal]);
-                }
-
-                if (currentSum > remainingMax || index >= len) return;
+                // Pruning: If currentSum already exceeds max, stop this branch
+                if (currentSum > remainingMax) return;
 
                 const price = prices[index];
                 const maxQty = Math.floor((remainingMax - currentSum) / price);
