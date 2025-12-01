@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,21 +15,25 @@
       box-shadow: var(--shadow-card);
       transition: transform 0.2s;
     }
+
     .menu-card:hover {
       transform: translateY(-3px);
       box-shadow: var(--shadow-soft);
     }
+
     .menu-title {
       font-size: 1.2rem;
       font-weight: 700;
       color: var(--primary-color);
       margin-bottom: 8px;
     }
+
     .menu-desc {
       font-size: 0.9rem;
       color: var(--text-light);
       margin-bottom: 20px;
     }
+
     .btn-link {
       width: 100%;
       background: var(--input-bg);
@@ -36,20 +41,23 @@
       justify-content: space-between;
       padding: 16px 20px;
     }
+
     .btn-link:hover {
       background: var(--primary-color);
       color: white;
     }
+
     .btn-link::after {
       content: '→';
       font-weight: bold;
     }
   </style>
 </head>
+
 <body>
   <div class="container" style="max-width: 600px;">
     <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" aria-label="Toggle Dark Mode">🌙</button>
-    
+
     <h1>满赠计算器</h1>
     <p style="text-align: center; color: var(--text-light); margin-bottom: 40px;">
       请选择你需要的计算器
@@ -82,8 +90,21 @@
       </a>
     </div>
 
-    <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px dashed rgba(140, 158, 255, 0.3); font-size: 0.85rem; color: var(--text-light); line-height: 1.8;">
-      遇到Bug或有建议？请联系 <a href="http://xhslink.com/o/2x2YmjdAGOo" target="_blank" style="color: var(--primary-color); font-weight: 600;">小红书咋肥四鸭</a>💜<br>
+    <div class="menu-card" style="border: 2px dashed var(--primary-color); background: var(--info-bg);">
+      <div class="menu-title">下载离线版计算器</div>
+      <div class="menu-desc">
+        下载以后使用浏览器打开，即可离线使用所有计算器。<br>
+        <strong style="color: var(--primary-color);">iOS</strong>需要使用<strong style="color: var(--primary-color);">非Safari</strong>的浏览器打开。
+      </div>
+      <a href="满赠计算器.html" download>
+        <button class="btn-link" style="background: var(--primary-color); color: white;">下载计算器</button>
+      </a>
+    </div>
+
+    <div
+      style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px dashed rgba(140, 158, 255, 0.3); font-size: 0.85rem; color: var(--text-light); line-height: 1.8;">
+      遇到Bug或有建议？请联系 <a href="http://xhslink.com/o/2x2YmjdAGOo" target="_blank"
+        style="color: var(--primary-color); font-weight: 600;">小红书咋肥四鸭</a>💜<br>
       觉得好用？<a href="support.html" style="color: var(--primary-color); font-weight: 600;">支持作者</a>
     </div>
   </div>
@@ -96,11 +117,12 @@
       localStorage.setItem('theme', next);
       document.getElementById('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
     }
-    
+
     // Load saved theme on init
     const saved = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', saved);
     document.getElementById('themeBtn').textContent = saved === 'dark' ? '☀️' : '🌙';
   </script>
 </body>
+
 </html>

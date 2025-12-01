@@ -1,0 +1,1575 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>满赠计算器</title>
+  <style>
+    /* --- MERGED CSS (style.css + index + support styles) --- */
+    :root {
+      /* Light Mode (Default) */
+      --bg-color: #eeeeff;
+      --container-bg: #ffffff;
+      --primary-color: #8c9eff;
+      --primary-hover: #7289da;
+      --text-color: #5a5961;
+      --text-light: #888899;
+      --input-bg: #f7f7fc;
+      --row-bg: #ffffff;
+      --card-bg: #ffffff;
+      --shadow-soft: 0 8px 30px rgba(140, 158, 255, 0.15);
+      --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.03);
+      --shadow-focus: 0 0 0 3px rgba(140, 158, 255, 0.3);
+      --success-bg: #e8f5e9;
+      --success-text: #2e7d32;
+      --error-bg: #ffebee;
+      --error-text: #c62828;
+      --info-bg: #e3f2fd;
+      --info-text: #1565c0;
+      --info-box-bg: rgba(140, 158, 255, 0.12);
+    }
+
+    [data-theme="dark"] {
+      /* Dark Mode */
+      --bg-color: #2b2b3b;
+      --container-bg: #353545;
+      --primary-color: #8c9eff;
+      --primary-hover: #aebfff;
+      --text-color: #e0e0e0;
+      --text-light: #aaaabb;
+      --input-bg: #454555;
+      --row-bg: #3a3a4a;
+      --card-bg: #404050;
+      --shadow-soft: 0 10px 40px rgba(0, 0, 0, 0.3);
+      --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.2);
+      --shadow-focus: 0 0 0 3px rgba(140, 158, 255, 0.5);
+      --success-bg: #1b3320;
+      --success-text: #a5d6a7;
+      --error-bg: #4a2c2c;
+      --error-text: #ef9a9a;
+      --info-bg: #1a2836;
+      --info-text: #90caf9;
+      --info-box-bg: rgba(140, 158, 255, 0.15);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      box-sizing: border-box;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      background: var(--container-bg);
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: var(--shadow-soft);
+      position: relative;
+      margin-top: 20px;
+      margin-bottom: 40px;
+      transition: background-color 0.3s ease;
+    }
+
+    /* View Toggling Logic */
+    .view-section {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .view-section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--primary-color);
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+      letter-spacing: -0.5px;
+    }
+
+    h2 {
+      font-size: 1.4rem;
+      margin-top: 30px;
+      margin-bottom: 15px;
+      color: var(--text-color);
+    }
+
+    p {
+      line-height: 1.6;
+      opacity: 0.9;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+      transition: opacity 0.2s;
+    }
+
+    a:hover {
+      opacity: 0.8;
+    }
+
+    /* Inputs */
+    .input-row,
+    .target-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding: 12px;
+      background: var(--input-bg);
+      border-radius: 12px;
+      align-items: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .input-row:focus-within {
+      background: var(--container-bg);
+      box-shadow: var(--shadow-card), var(--shadow-focus);
+    }
+
+    .input-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-light);
+      margin-bottom: 4px;
+      margin-left: 4px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 8px;
+      background: var(--row-bg);
+      color: var(--text-color);
+      font-size: 1rem;
+      box-sizing: border-box;
+      box-shadow: var(--shadow-card);
+      transition: all 0.2s;
+    }
+
+    input:focus {
+      outline: none;
+      box-shadow: var(--shadow-focus);
+    }
+
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+
+    /* Buttons */
+    button {
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+      font-weight: 600;
+      border-radius: 12px;
+      padding: 14px 24px;
+      font-size: 1rem;
+      transition: transform 0.1s, box-shadow 0.2s, background-color 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+      width: 100%;
+      margin-top: 20px;
+      font-size: 1.1rem;
+      box-shadow: 0 4px 15px rgba(140, 158, 255, 0.4);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+      transform: translateY(-2px);
+    }
+
+    .btn-add {
+      background-color: var(--row-bg);
+      color: var(--text-light);
+      width: 100%;
+      margin-top: 10px;
+      border: 1px dashed var(--primary-color);
+      box-shadow: none;
+    }
+
+    .btn-add:hover {
+      background-color: var(--bg-color);
+      color: var(--primary-color);
+    }
+
+    .btn-remove {
+      background: transparent;
+      color: var(--error-text);
+      padding: 8px 12px;
+      font-size: 0.9rem;
+    }
+
+    .btn-remove:hover {
+      background-color: var(--error-bg);
+      border-radius: 8px;
+    }
+
+    /* Info Box */
+    .info-box {
+      background: var(--info-box-bg);
+      color: var(--text-color);
+      padding: 20px;
+      border-radius: 16px;
+      font-size: 0.95rem;
+      margin-bottom: 30px;
+      display: flex;
+      align-items: flex-start;
+      gap: 15px;
+      box-shadow: var(--shadow-card);
+      line-height: 1.6;
+    }
+
+    .info-box strong {
+      color: var(--primary-color);
+      font-weight: 700;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      color: var(--primary-color);
+      font-weight: 700;
+      margin: 30px 0 15px;
+      font-size: 1.1rem;
+    }
+
+    .section-title::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 24px;
+      background-color: var(--primary-color);
+      margin-right: 10px;
+      border-radius: 3px;
+    }
+
+    /* Results */
+    .results-area {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 2px dashed var(--input-bg);
+      display: none;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .summary-card {
+      background: var(--info-bg);
+      color: var(--info-text);
+      padding: 20px;
+      border-radius: 16px;
+      text-align: center;
+      margin-bottom: 20px;
+      font-weight: 500;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      border-radius: 16px;
+      box-shadow: var(--shadow-card);
+      max-height: 70vh;
+      overflow-y: auto;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--row-bg);
+      font-size: 0.9rem;
+    }
+
+    th {
+      background: var(--primary-color);
+      color: white;
+      padding: 8px 4px;
+      text-align: center;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      white-space: normal;
+      line-height: 1.2;
+    }
+
+    td {
+      padding: 8px 4px;
+      text-align: center;
+      border-bottom: 1px solid var(--input-bg);
+      color: var(--text-color);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Controls */
+    .theme-toggle,
+    .btn-home {
+      position: absolute;
+      top: 25px;
+      background: var(--input-bg);
+      color: var(--text-color);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      box-shadow: var(--shadow-card);
+      border: none;
+      transition: all 0.2s;
+      z-index: 20;
+    }
+
+    .theme-toggle:hover,
+    .btn-home:hover {
+      background: var(--row-bg);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-soft);
+      color: var(--primary-color);
+    }
+
+    .theme-toggle {
+      right: 25px;
+    }
+
+    .btn-home {
+      left: 25px;
+    }
+
+    /* Home Menu Cards */
+    .menu-card {
+      background: var(--row-bg);
+      padding: 25px;
+      border-radius: 16px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-card);
+      transition: transform 0.2s;
+    }
+
+    .menu-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .menu-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 8px;
+    }
+
+    .menu-desc {
+      font-size: 0.9rem;
+      color: var(--text-light);
+      margin-bottom: 20px;
+    }
+
+    .btn-link {
+      width: 100%;
+      background: var(--input-bg);
+      color: var(--text-color);
+      justify-content: space-between;
+      padding: 16px 20px;
+    }
+
+    .btn-link:hover {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .btn-link::after {
+      content: '→';
+      font-weight: bold;
+    }
+
+    /* Stats & Schemes */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+
+    .stat-card {
+      background: var(--info-bg);
+      padding: 12px 8px;
+      border-radius: 12px;
+      text-align: center;
+      border: 1px solid rgba(140, 158, 255, 0.2);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .stat-val {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--primary-color);
+      line-height: 1.2;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-color);
+      opacity: 0.8;
+      margin-top: 4px;
+    }
+
+    .stat-card.sub-stat {
+      background: var(--input-bg);
+      border-color: transparent;
+    }
+
+    .stat-card.sub-stat .stat-val {
+      color: var(--text-light);
+      font-size: 1.1rem;
+    }
+
+    .scheme-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .scheme-card {
+      background: var(--row-bg);
+      padding: 20px;
+      border-radius: 16px;
+      cursor: pointer;
+      box-shadow: var(--shadow-card);
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .scheme-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .scheme-card.active {
+      border-color: var(--primary-color);
+      background: var(--info-bg);
+    }
+
+    .res-tag {
+      display: inline-block;
+      background: var(--input-bg);
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: var(--text-color);
+      border: 1px solid rgba(140, 158, 255, 0.2);
+      margin-right: 5px;
+      margin-bottom: 5px;
+    }
+
+    /* Mobile Responsive */
+    .mobile-results-container {
+      display: none;
+    }
+
+    .result-card {
+      background: var(--row-bg);
+      border: 1px solid var(--input-bg);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: var(--shadow-card);
+    }
+
+    .result-card-header {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--input-bg);
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+      font-weight: 700;
+      color: var(--primary-color);
+    }
+
+    .result-item-line {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+      color: var(--text-color);
+    }
+
+    .mobile-summary-container {
+      display: none;
+    }
+
+    .mobile-summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--input-bg);
+      background: var(--row-bg);
+      color: var(--text-color);
+    }
+
+    /* Scroll Button */
+    .btn-scroll-top {
+      position: fixed;
+      bottom: 30px;
+      right: 25px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      margin: 0;
+      padding: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: var(--primary-color);
+      color: white;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      font-size: 1.5rem;
+      opacity: 0.9;
+      transition: all 0.3s;
+    }
+
+    .btn-scroll-top:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      opacity: 1;
+    }
+
+    /* Support Page Specifics */
+    .support-container {
+      text-align: center;
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 20px 0;
+    }
+
+    .qr-image {
+      width: 100%;
+      max-width: 300px;
+      height: auto;
+      border-radius: 16px;
+      box-shadow: var(--shadow-soft);
+      margin-top: 20px;
+      transition: transform 0.3s ease;
+    }
+
+    .qr-image:hover {
+      transform: scale(1.02);
+    }
+
+    @media (max-width: 768px) {
+      .table-responsive {
+        display: none;
+      }
+
+      .mobile-results-container,
+      .mobile-summary-container {
+        display: block;
+        margin-bottom: 25px;
+        box-shadow: var(--shadow-card);
+        border-radius: 12px;
+        border: 1px solid var(--input-bg);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 25px 15px;
+        border-radius: 20px;
+      }
+
+      .input-row,
+      .target-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+
+      .item-row {
+        display: grid !important;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 10px;
+        align-items: end;
+      }
+
+      .item-row .input-group:nth-child(1) {
+        grid-column: 1 / 2;
+      }
+
+      .item-row .input-group:nth-child(2) {
+        grid-column: 2 / 3;
+      }
+
+      .item-row .input-group:nth-child(3) {
+        grid-column: 1 / 2;
+      }
+
+      .item-row .btn-remove {
+        grid-column: 2 / 3;
+        width: 100%;
+        margin-top: 0;
+        height: 46px;
+        background-color: var(--error-bg);
+        border-radius: 8px;
+      }
+
+      h1 {
+        font-size: 1.6rem;
+      }
+
+      .theme-toggle {
+        top: 15px;
+        right: 15px;
+      }
+
+      .btn-home {
+        top: 15px;
+        left: 15px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <button class="btn-home" id="btnHomeIcon" onclick="switchView('home')" aria-label="Home"
+      style="display:none;">🏠</button>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+
+    <div id="view-home" class="view-section active">
+      <h1>满赠计算器</h1>
+      <p style="text-align: center; color: var(--text-light); margin-bottom: 40px;">
+        请选择你需要的计算器
+      </p>
+
+      <div class="menu-card">
+        <div class="menu-title">凑单计算器</div>
+        <div class="menu-desc">根据商品单价和最少数量，计算最接近满赠金额的组合方案。</div>
+        <button class="btn-link" onclick="switchView('fill')">开始凑单</button>
+      </div>
+
+      <div class="menu-card">
+        <div class="menu-title">拆单计算器</div>
+        <div class="menu-desc">将大量商品拆分为多个<b>相同金额</b>的目标订单。</div>
+        <button class="btn-link" onclick="switchView('split')">开始拆单</button>
+      </div>
+
+      <div class="menu-card">
+        <div class="menu-title">拆多种单计算器</div>
+        <div class="menu-desc">将大量商品拆分为多个<b>不同金额</b>的目标订单。</div>
+        <button class="btn-link" onclick="switchView('gamma')">开始拆多种单</button>
+      </div>
+
+      <div class="menu-card">
+        <div class="menu-title">支持作者</div>
+        <div class="menu-desc">觉得好用？请作者喝杯咖啡吧 💜</div>
+        <button class="btn-link" onclick="switchView('support')">点击支持</button>
+      </div>
+    </div>
+
+    <div id="view-fill" class="view-section">
+      <h1>凑单计算器</h1>
+      <div class="info-box">
+        <div><strong>使用说明：</strong> 输入商品的单价、最低需要的数量、目标总价，计算器会给出最接近目标的方案。</div>
+      </div>
+
+      <div class="section-title">第一步：添加商品</div>
+      <div id="fill-items-container"></div>
+      <button class="btn-add" onclick="fill_addItemRow()">+ 添加一行商品</button>
+
+      <div class="section-title">第二步：设置目标</div>
+      <div class="input-row" style="background: var(--card-bg); box-shadow: var(--shadow-card);">
+        <div class="input-group">
+          <label>目标总价 (¥)</label>
+          <input type="number" id="fill-target" placeholder="例如 300" onchange="fill_saveData()">
+        </div>
+        <div class="input-group">
+          <label>允许超出 (¥)</label>
+          <input type="number" id="fill-errt" value="0" min="0" onchange="fill_saveData()">
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="fill_calculate()">开始计算</button>
+
+      <div id="fill-errorMsg"
+        style="display:none; margin-top:20px; padding:15px; background:var(--error-bg); color:var(--error-text); border-radius:12px; text-align:center;">
+      </div>
+
+      <div id="fill-resultsSection" class="results-area">
+        <h2>计算结果</h2>
+        <div id="fill-resultsSummary" class="summary-card"></div>
+        <div class="table-responsive">
+          <table id="fill-resultsTable"></table>
+        </div>
+        <div id="fill-mobileResults" class="mobile-results-container"></div>
+        <button class="btn-scroll-top" onclick="window.scrollTo({top:0, behavior:'smooth'})">↑</button>
+      </div>
+    </div>
+
+    <div id="view-split" class="view-section">
+      <h1>拆单计算器</h1>
+      <div class="info-box">
+        <div><strong>使用说明：</strong> 输入所有商品的单价数量和目标单笔金额，计算器会将商品拆分成尽可能多的订单。</div>
+      </div>
+
+      <div class="section-title">第一步：商品库存</div>
+      <div id="split-items-container"></div>
+      <button class="btn-add" onclick="split_addItemRow()">+ 添加一行商品</button>
+
+      <div class="section-title">第二步：拆单设置</div>
+      <div class="input-row" style="background: var(--card-bg); box-shadow: var(--shadow-card);">
+        <div class="input-group">
+          <label>每单目标金额 (¥)</label>
+          <input type="number" id="split-target" placeholder="例如 188" onchange="split_saveData()">
+        </div>
+        <div class="input-group">
+          <label>允许超出 (¥)</label>
+          <input type="number" id="split-errt" value="5" onchange="split_saveData()">
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="split_calculate()">开始拆单</button>
+
+      <div id="split-errorMsg"
+        style="display:none; margin-top:20px; padding:15px; background:var(--error-bg); color:var(--error-text); border-radius:12px; text-align:center;">
+      </div>
+
+      <div id="split-resultsSection" class="results-area">
+        <h2>计算结果</h2>
+        <div id="split-combinationsContainer"></div>
+        <div id="split-leftoverContainer" style="margin-top: 30px;"></div>
+        <button class="btn-scroll-top" onclick="window.scrollTo({top:0, behavior:'smooth'})">↑</button>
+      </div>
+    </div>
+
+    <div id="view-gamma" class="view-section">
+      <h1>拆多种单计算器</h1>
+      <div class="info-box">
+        <div><strong>使用说明：</strong> 输入所有商品的单价、数量、目标单笔金额、目标单数，计算器会将商品拆分成尽可能多的订单。</div>
+      </div>
+
+      <div class="section-title">第一步：商品库存</div>
+      <div id="gamma-items-container"></div>
+      <button class="btn-add" onclick="gamma_addItemRow()">+ 添加一行商品</button>
+
+      <div class="section-title">第二步：设置目标订单</div>
+      <div id="gamma-targetContainer"></div>
+      <button class="btn-add" onclick="gamma_addTargetRow()">+ 添加目标金额</button>
+
+      <div class="input-row" style="margin-top: 20px; background: var(--card-bg); box-shadow:var(--shadow-card);">
+        <div class="input-group">
+          <label>统一允许误差 (¥)</label>
+          <input type="number" id="gamma-errt" value="5" onchange="gamma_saveData()">
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="gamma_calculate()">计算最佳方案</button>
+
+      <div id="gamma-errorMsg"
+        style="display:none; margin-top:20px; padding:15px; background:var(--error-bg); color:var(--error-text); border-radius:12px; text-align:center;">
+      </div>
+
+      <div id="gamma-resultsSection" class="results-area">
+        <h2>计算结果</h2>
+        <p style="color:var(--text-light); margin-bottom:15px; font-size:0.9rem;">
+          已通过大量随机模拟寻找最优解。点击下方卡片查看不同策略的结果：
+        </p>
+        <div id="gamma-schemeComparison" class="scheme-grid"></div>
+        <div id="gamma-detailedResults"></div>
+        <button class="btn-scroll-top" onclick="window.scrollTo({top:0, behavior:'smooth'})">↑</button>
+      </div>
+    </div>
+
+    <div id="view-support" class="view-section">
+      <div class="support-container">
+        <h1>感谢支持</h1>
+        <p style="color: var(--text-color); margin-bottom: 20px; font-size: 0.95rem; line-height: 1.6;">
+          很高兴计算器对您有帮助！<br>
+          如果您喜欢计算器，可以通过下方二维码打赏 💜
+        </p>
+        <img
+          src="data:image/jpeg;base64,/9j/4QDKRXhpZgAATU0AKgAAAAgABgESAAMAAAABAAEAAAEaAAUAAAABAAAAVgEbAAUAAAABAAAAXgEoAAMAAAABAAIAAAITAAMAAAABAAEAAIdpAAQAAAABAAAAZgAAAAAAAABIAAAAAQAAAEgAAAABAAeQAAAHAAAABDAyMjGRAQAHAAAABAECAwCgAAAHAAAABDAxMDCgAQADAAAAAQABAACgAgAEAAAAAQAABICgAwAEAAAAAQAABICkBgADAAAAAQAAAAAAAAAAAAD/4gIoSUNDX1BST0ZJTEUAAQEAAAIYYXBwbAQAAABtbnRyUkdCIFhZWiAH5gABAAEAAAAAAABhY3NwQVBQTAAAAABBUFBMAAAAAAAAAAAAAAAAAAAAAAAA9tYAAQAAAADTLWFwcGzs/aOOOIVHw220vU962hgvAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAApkZXNjAAAA/AAAADBjcHJ0AAABLAAAAFB3dHB0AAABfAAAABRyWFlaAAABkAAAABRnWFlaAAABpAAAABRiWFlaAAABuAAAABRyVFJDAAABzAAAACBjaGFkAAAB7AAAACxiVFJDAAABzAAAACBnVFJDAAABzAAAACBtbHVjAAAAAAAAAAEAAAAMZW5VUwAAABQAAAAcAEQAaQBzAHAAbABhAHkAIABQADNtbHVjAAAAAAAAAAEAAAAMZW5VUwAAADQAAAAcAEMAbwBwAHkAcgBpAGcAaAB0ACAAQQBwAHAAbABlACAASQBuAGMALgAsACAAMgAwADIAMlhZWiAAAAAAAAD21QABAAAAANMsWFlaIAAAAAAAAIPfAAA9v////7tYWVogAAAAAAAASr8AALE3AAAKuVhZWiAAAAAAAAAoOAAAEQsAAMi5cGFyYQAAAAAAAwAAAAJmZgAA8qcAAA1ZAAAT0AAACltzZjMyAAAAAAABDEIAAAXe///zJgAAB5MAAP2Q///7ov///aMAAAPcAADAbv/bAIQAGRkZGRkZKhkZKjwqKio8UTw8PDxRZlFRUVFRZnxmZmZmZmZ8fHx8fHx8fJSUlJSUlK2tra2twsLCwsLCwsLCwgEeICAxLjFVLi5Vy4pxisvLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vLy8vL/90ABAAi/8AAEQgCEgISAwEiAAIRAQMRAf/EAaIAAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKCxAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6AQADAQEBAQEBAQEBAAAAAAAAAQIDBAUGBwgJCgsRAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/aAAwDAQACEQMRAD8A6iiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD/0OoooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAoqiupWTS+Qsg3dKvUAFFFFABRRVKTUbKKXyXkAbp9KALtFAIIyKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP//R6iiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAEJAGT0FY6a5ZPN5IyMnAbtWrKu+JkHcEV5owKMVPUcUAen0VVsZvPtI5fVRVqgAqC5z9nk28HacflU9NZQylT3GKAPMlO0hh2r0yNt0at6gV59JYXSTmERtnOBxXfwIY4UjPVVA/KgCWiiigAribrSL43TbE3BjkN2rtqKAIbeMxQJE3JVQPyqaiigAooooAyJtas4ZjCcnHBIHArWVldQy9COK5S40G4e5ZomXYxzz2rp4YxDEkQ/hAH5UAS0UUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAf/9LqKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAOXuNfkiuGjjjBRTjnrxXSQyCWJZV6MAayJ9CtppzNuK5OSorZRFjQRpwFGB+FADqKKKACuA1WHyb6RexO4fjXf1zWvWUkpS4iXdgbTj9KAJfD02+2aE/wAB4+hroK5nw/bTRGSWRSqkADPFdNQAUUUUAFFFFABRRRQAUVTv53trSSaP7yjiub0zVLyS8SKVt6ucYoA7CiiigApjyJGu6QhR70+ue1+CeWOMxAsq5yBQBvRyRyrujYMPan1znh+CeJZGkBVTjAPFdHQAUUUUANdhGhc9FGfyrl4/EMjThWjAjJxx1FdSVDKVPQjFYkeg2qTCXcSAchaANyiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA/9PqKKKKACiiigAooooAKKKKACiiigAooooAKKKKACjp1orK1kSHT38v2zj0oA0kkjf7jA49KfXnNndvZzrMnQdR6ivQoZUmjWWM5VhxQBJRRRQAUUVQv7+OwjDsNxbgAUAX6Ky9O1OO/wByhdjL29q1KACiiigAorgr67u/tr5dl2tgAdq7a1Z3to3k+8VGaAJ6KKKAOf1bVZrOVYYAM4ySavaXetfW/mOAGU4OOlOvdNt74hpchl4yPSrFraxWcXkwjAoAsUUUUANZFdSjjIPGKqwafZ2z+ZDGFb1qPUb9bCIPt3FjgCodN1QX5ZCmxlGfwoA1qKKKACio5iyxOydQDiuDt7y8+1qwdixYcf8A1qAPQKKKKACiis3UNRj09Vyu5m6D6UAaVFZ2n6jHfoxVdpXqK0aACiiigAprOiDLkL9aR3SJDI5wqjmvP7+8e9nMh4UcKPQUAehAgjI6UtY2hCQWA39Mnb9K2aACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA//1OoooooAKKKKACiiigAooooA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pkx3HArUs7uO9hE0fA6Y9K4e1027u/8AVrhf7x4Fdpp9mLG3EIOT1JoAqappbXxWSNgrKMc9MVNpdgbCEqzbmY5OOladFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQBlappxv0XY21k6elQaXpLWMhmlYEkYAFblFAFe6uY7SAzydB2FZ9jrEV7L5Owo2OKu3tot5bmAnGeh+lZenaMbOfz5HDEdAKAN+iiigAooooAKrXFpb3QAnQNjpVmigDn5fD1q3MTMn61pWNhFYRlIznPUmr1FAGRrfnCxPk56jOPSsbQDP8AaSBny9vPp7V2GO1IFVeFAH0oAGYIpZuABWNFrtpLMIQCATgHtWtLGJY2jPRhiuYg8PzJcKzuNinPHXigDq6KKKACiiigAooooA//1OoooooAKKKKACiiigAooooAKKKKACoJ7mC2XdMwUVzV9rspZorUbQON3f8ACued5JW3OSxNAHR3fiAn5LNcf7R/wrnpp5rht8zFj71pWmi3dxhmHlp6n/CumtdJs7XDBd7Du1AHKWuk3d1ghdiep4rprTRbS2wzjzG9+n5VsUUAAAAwOBRRTBLEW2Bhn0zQA+iiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKK5C81q8junSLCqhxjHpQB19FQW03n26TYxuAOKnoAKKKKACiio5t4hfy/vbTigB+R0pa8186dJN+5g4/Otu01+aP5bobx6jg0AdfRVS2vra7GYWGfTv+VW6ACiiigAooooAKKKKACiiigAooooA//V6iiiigAooooAKKKZI4jjaRuijP5UAPormIPEDSTqjxgIxxx1FdPQAUUUUAc1L4eV5i6S4QnOMVrWum2loP3a5b+8etX6KACiiigAqOWWOFDJKQqipK88vrua6nYyHgHAXsKANLUNbknBitvkT17n/Csm0WV7mMQ/eyOlWrHS7i9IbGyP+8f6V2VpZW9mmyFfqe5oAt0UUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABWbPpNlcS+dIvJ64OM1pUUAIqqihVGAOAKWiigAooooAKKKKAKN1p1rdj94uG/vD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d2nP7YNcfYnbeQn/AGxQB6NRRRQAUUUUAFFFFABRRRQBQvdQgsFXzckt0Ap1lfQ3yF4uMdQe1ZHiG3Zo0uF6JwfxrG0i7+y3a5+4/wAp/pQB3tFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQB/9XqKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAOTudBuHuWeJl2Mc89q6eGMQwpEP4AB+VS0UAFFFFABXA6vN51/Iey/KPwru5W8uNn/ujP5V5mzF2LHqaAOu8PQ7Ld5j/GcD6CuhqnYQ+RZxR9wvNXKACiikYhVLHsKAForz+TU7xpzKshHPAHTH0ru4X82FJOm5QaAJaKKKAKd/EZ7OWJRyV4rhbSKRrqNEB3bh+FejU0KoOQADQA6iiigAqvdzfZ7Z5gM7BnFWKhuIhNA8R/iUigDlLPW7s3KrOQUY4xjGK7GvMOVb3FekW0nm28cn95RQBPRRRQBFNEs8TQv0YYrlovD9ws43svlg9R1rrqKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA//9bqKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAQgMNp6HisNNAtUmEm4lQche1btFABRRRQAVBc5FtIQM/KePwqejHagDy8DJAFemxLtjVfQAVQTSbFJvOVOeuO35VpUAFFFFABXGXOtXq3LCMhVU4C49K7Os6XSbGaXznTnv6UAXIJPOgSXGNyg4qWkACgAcAUtABRRRQBhzaFbTTGXcVBOSo6VtIixoEXgKMCnUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFAH/1+oooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA/9DqKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP/Z"
+          alt="Support QR Code" class="qr-image">
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // --- GLOBAL: THEME, NAVIGATION, & SCROLL LOGIC ---
+    document.addEventListener('DOMContentLoaded', () => {
+      loadTheme();
+      // Load data for all calculators
+      fill_loadData();
+      split_loadData();
+      gamma_loadData();
+    });
+
+    // SCROLL BUTTON LOGIC (Auto hide/show)
+    window.addEventListener('scroll', () => {
+      const scrollBtns = document.querySelectorAll('.btn-scroll-top');
+      if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+        scrollBtns.forEach(btn => btn.style.display = "flex");
+      } else {
+        scrollBtns.forEach(btn => btn.style.display = "none");
+      }
+    });
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      document.getElementById('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
+    }
+    function loadTheme() {
+      const saved = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', saved);
+      document.getElementById('themeBtn').textContent = saved === 'dark' ? '☀️' : '🌙';
+    }
+
+    function switchView(viewName) {
+      document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+      document.getElementById(`view-${viewName}`).classList.add('active');
+      const homeBtn = document.getElementById('btnHomeIcon');
+      if (viewName === 'home') {
+        homeBtn.style.display = 'none';
+      } else {
+        homeBtn.style.display = 'flex';
+      }
+      window.scrollTo(0, 0);
+    }
+
+    // Helper: Fisher-Yates Shuffle
+    function shuffle(array) {
+      let currentIndex = array.length, randomIndex;
+      while (currentIndex != 0) {
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+      }
+      return array;
+    }
+
+    // ========================================================
+    // LOGIC: FILL CALCULATOR (凑单)
+    // ========================================================
+    function fill_saveData() {
+      const items = [];
+      document.querySelectorAll('#fill-items-container .item-row').forEach(row => {
+        items.push({
+          name: row.querySelector('.name-input').value,
+          price: row.querySelector('.price-input').value,
+          qty: row.querySelector('.qty-input').value
+        });
+      });
+      const data = {
+        items: items,
+        target: document.getElementById('fill-target').value,
+        errt: document.getElementById('fill-errt').value
+      };
+      localStorage.setItem('fill_calc_data', JSON.stringify(data));
+    }
+
+    function fill_loadData() {
+      const saved = localStorage.getItem('fill_calc_data');
+      const container = document.getElementById('fill-items-container');
+      container.innerHTML = '';
+      if (saved) {
+        const data = JSON.parse(saved);
+        if (data.items && data.items.length) {
+          data.items.forEach(item => fill_addItemRow(item.name, item.price, item.qty));
+        } else {
+          fill_addItemRow(); fill_addItemRow(); fill_addItemRow();
+        }
+        document.getElementById('fill-target').value = data.target || '';
+        document.getElementById('fill-errt').value = data.errt || 0;
+      } else {
+        fill_addItemRow(); fill_addItemRow(); fill_addItemRow();
+      }
+    }
+
+    function fill_addItemRow(name = '', price = '', qty = '') {
+      const container = document.getElementById('fill-items-container');
+      const div = document.createElement('div');
+      div.className = 'input-row item-row';
+      div.innerHTML = `
+        <div class="input-group" style="flex: 1.5;">
+          <label>商品名</label>
+          <input type="text" class="name-input" placeholder="例如: 吧唧" value="${name}" onchange="fill_saveData()">
+        </div>
+        <div class="input-group">
+          <label>单价 (¥)</label>
+          <input type="number" class="price-input" placeholder="0.00" min="0" step="0.01" value="${price}" onchange="fill_saveData()">
+        </div>
+        <div class="input-group">
+          <label>最低数量</label>
+          <input type="number" class="qty-input" placeholder="0" min="0" value="${qty}" onchange="fill_saveData()">
+        </div>
+        <button class="btn-remove" onclick="this.parentElement.remove(); fill_saveData()">✕</button>
+      `;
+      container.appendChild(div);
+      fill_saveData();
+    }
+
+    function fill_showError(msg) {
+      const el = document.getElementById('fill-errorMsg');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function fill_calculate() {
+      const errorEl = document.getElementById('fill-errorMsg');
+      errorEl.style.display = 'none';
+      const items = [];
+      document.querySelectorAll('#fill-items-container .item-row').forEach(row => {
+        const n = row.querySelector('.name-input').value.trim();
+        const p = parseFloat(row.querySelector('.price-input').value);
+        const q = parseInt(row.querySelector('.qty-input').value);
+        if (!isNaN(p) && p > 0) {
+          items.push({ name: n || `¥${p}`, price: p, min: isNaN(q) ? 0 : q });
+        }
+      });
+      const target = parseFloat(document.getElementById('fill-target').value);
+      const errt = parseFloat(document.getElementById('fill-errt').value) || 0;
+
+      if (items.length === 0) return fill_showError("请至少输入一个有效的商品单价。");
+      if (isNaN(target) || target <= 0) return fill_showError("请输入有效的目标总价。");
+
+      items.sort((a, b) => b.price - a.price);
+      const results = [];
+      const len = items.length;
+      const prices = items.map(i => i.price);
+      const minItems = items.map(i => i.min);
+      const baseCost = items.reduce((sum, item) => sum + item.price * item.min, 0);
+
+      if (baseCost > target + errt) return fill_showError(`最低数量的总价 (¥${baseCost}) 已经超过了上限。`);
+
+      const remainingMin = Math.max(0, target - baseCost);
+      const remainingMax = target + errt - baseCost;
+      let limitReached = false;
+      const MAX_RESULTS = 500;
+
+      function search(index, currentCounts, currentSum) {
+        if (limitReached) return;
+        if (index === len) {
+          if (currentSum >= remainingMin && currentSum <= remainingMax) {
+            // Check Limit
+            if (results.length >= MAX_RESULTS) {
+              limitReached = true;
+              return;
+            }
+
+            const totalCounts = currentCounts.map((c, i) => c + minItems[i]);
+            const totalVal = totalCounts.reduce((s, c, i) => s + c * prices[i], 0);
+            results.push([...totalCounts, totalVal]);
+          }
+          return;
+        }
+
+        // Pruning: If currentSum already exceeds max, stop this branch
+        if (currentSum > remainingMax) return;
+        const price = prices[index];
+        const maxQty = Math.floor((remainingMax - currentSum) / price);
+        for (let q = 0; q <= maxQty; q++) {
+          currentCounts[index] = q;
+          search(index + 1, currentCounts, currentSum + (q * price));
+          currentCounts[index] = 0;
+          if (limitReached) return;
+        }
+      }
+      search(0, new Array(len).fill(0), 0);
+
+      results.sort((a, b) => {
+        const totalA = a[a.length - 1];
+        const totalB = b[b.length - 1];
+        if (Math.abs(totalA - totalB) > 0.001) return totalA - totalB;
+        return 0;
+      });
+
+      fill_displayResults(results, items, limitReached);
+    }
+
+    function fill_displayResults(results, items, limitReached) {
+      const section = document.getElementById('fill-resultsSection');
+      const summary = document.getElementById('fill-resultsSummary');
+      const table = document.getElementById('fill-resultsTable');
+      const mobileContainer = document.getElementById('fill-mobileResults');
+
+      section.style.display = 'block';
+      mobileContainer.innerHTML = '';
+      table.innerHTML = '';
+      const existingWarning = document.getElementById('fill-limitWarningBanner');
+      if (existingWarning) existingWarning.remove();
+
+      if (results.length === 0) {
+        summary.innerHTML = "未找到满足条件的方案";
+        summary.style.backgroundColor = "var(--error-bg)";
+        summary.style.color = "var(--error-text)";
+        return;
+      }
+
+      if (limitReached) {
+        const warning = document.createElement('div');
+        warning.id = 'fill-limitWarningBanner';
+        warning.className = 'limit-warning';
+        warning.style.cssText = "background-color:#fff3cd;color:#856404;border:1px solid #ffeeba;padding:15px;border-radius:12px;margin-bottom:20px;text-align:center;font-size:0.9rem;";
+        warning.innerHTML = `<span>结果过多，仅显示前 500 条方案。</span>`;
+        summary.after(warning);
+      }
+
+      summary.innerHTML = `成功找到 <b>${results.length}</b> 种方案`;
+      summary.style.backgroundColor = "var(--success-bg)";
+      summary.style.color = "var(--success-text)";
+
+      let headerHTML = '<thead><tr>';
+      items.forEach(item => headerHTML += `<th>${item.name}<br><small style="font-weight:400; opacity:0.8;">¥${item.price}</small></th>`);
+      headerHTML += '<th>总价</th></tr></thead>';
+      table.innerHTML = headerHTML;
+
+      const tbody = document.createElement('tbody');
+      results.forEach(row => {
+        const tr = document.createElement('tr');
+        for (let i = 0; i < row.length - 1; i++) {
+          const td = document.createElement('td'); td.textContent = row[i]; tr.appendChild(td);
+        }
+        const totalTd = document.createElement('td');
+        totalTd.innerHTML = `<b>¥${parseFloat(row[row.length - 1].toFixed(2))}</b>`;
+        tr.appendChild(totalTd);
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+
+      results.forEach((row, index) => {
+        const totalVal = row[row.length - 1];
+        let itemsHtml = '';
+        for (let i = 0; i < row.length - 1; i++) {
+          if (row[i] > 0) {
+            itemsHtml += `<div class="result-item-line"><span class="result-item-name">${items[i].name} (¥${items[i].price})</span><span style="font-weight:600;">x ${row[i]}</span></div>`;
+          }
+        }
+        const card = document.createElement('div');
+        card.className = 'result-card';
+        card.innerHTML = `<div class="result-card-header"><span>方案 ${index + 1}</span><span>¥${parseFloat(totalVal.toFixed(2))}</span></div>${itemsHtml}`;
+        mobileContainer.appendChild(card);
+      });
+      section.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ========================================================
+    // LOGIC: SPLIT CALCULATOR (拆单)
+    // ========================================================
+    function split_saveData() {
+      const items = [];
+      document.querySelectorAll('#split-items-container .item-row').forEach(row => {
+        items.push({
+          name: row.querySelector('.name-input').value,
+          price: row.querySelector('.price-input').value,
+          qty: row.querySelector('.qty-input').value
+        });
+      });
+      const data = {
+        items: items,
+        target: document.getElementById('split-target').value,
+        errt: document.getElementById('split-errt').value
+      };
+      localStorage.setItem('split_calc_data', JSON.stringify(data));
+    }
+
+    function split_loadData() {
+      const saved = localStorage.getItem('split_calc_data');
+      const container = document.getElementById('split-items-container');
+      container.innerHTML = '';
+      if (saved) {
+        const data = JSON.parse(saved);
+        if (data.items && data.items.length) {
+          data.items.forEach(item => split_addItemRow(item.name, item.price, item.qty));
+        } else {
+          split_addItemRow(); split_addItemRow();
+        }
+        document.getElementById('split-target').value = data.target || '';
+        document.getElementById('split-errt').value = data.errt || 5;
+      } else {
+        split_addItemRow(); split_addItemRow();
+      }
+    }
+
+    function split_addItemRow(name = '', price = '', qty = '') {
+      const container = document.getElementById('split-items-container');
+      const div = document.createElement('div');
+      div.className = 'input-row item-row';
+      div.innerHTML = `
+        <div class="input-group" style="flex: 1.5;">
+          <label>商品名</label>
+          <input type="text" class="name-input" placeholder="例如: 吧唧" value="${name}" onchange="split_saveData()">
+        </div>
+        <div class="input-group">
+          <label>单价</label>
+          <input type="number" class="price-input" placeholder="0.00" min="0" step="0.01" value="${price}" onchange="split_saveData()">
+        </div>
+        <div class="input-group">
+          <label>库存</label>
+          <input type="number" class="qty-input" placeholder="0" min="0" value="${qty}" onchange="split_saveData()">
+        </div>
+        <button class="btn-remove" onclick="this.parentElement.remove(); split_saveData()">✕</button>
+      `;
+      container.appendChild(div);
+      split_saveData();
+    }
+
+    function split_showError(msg) {
+      const el = document.getElementById('split-errorMsg');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function split_calculate() {
+      const errorEl = document.getElementById('split-errorMsg');
+      errorEl.style.display = 'none';
+      const items = [];
+      document.querySelectorAll('#split-items-container .item-row').forEach(row => {
+        const n = row.querySelector('.name-input').value.trim();
+        const p = parseFloat(row.querySelector('.price-input').value);
+        const q = parseInt(row.querySelector('.qty-input').value);
+        if (!isNaN(p) && p > 0 && !isNaN(q) && q > 0) {
+          items.push({ name: n || `¥${p}`, price: p, qty: q });
+        }
+      });
+      const target = parseFloat(document.getElementById('split-target').value);
+      const errt = parseFloat(document.getElementById('split-errt').value) || 0;
+
+      if (items.length === 0) return split_showError("请输入有效商品");
+      if (isNaN(target) || target <= 0) return split_showError("请输入目标金额");
+
+      const prices = items.map(i => i.price);
+      const baseInventory = items.map(i => i.qty);
+      const numItems = prices.length;
+      const MAX_TIME_MS = 800;
+      const startTime = Date.now();
+      let bestResult = null;
+      let maxOrders = -1;
+      let minLeftoverVal = Infinity;
+      let trials = 0;
+
+      while (Date.now() - startTime < MAX_TIME_MS) {
+        trials++;
+        let searchOrder = Array.from({ length: numItems }, (_, i) => i);
+        if (trials === 1) searchOrder.sort((a, b) => prices[b] - prices[a]);
+        else shuffle(searchOrder);
+
+        let currentInventory = [...baseInventory];
+        let currentOrders = [];
+        let canMakeMore = true;
+
+        while (canMakeMore) {
+          const combo = split_findCombo(prices, currentInventory, target, errt, searchOrder);
+          if (combo) {
+            currentOrders.push(combo);
+            combo.items.forEach((count, idx) => currentInventory[idx] -= count);
+          } else {
+            canMakeMore = false;
+          }
+          if (currentInventory.every(c => c === 0)) canMakeMore = false;
+        }
+
+        const leftoverVal = currentInventory.reduce((sum, count, i) => sum + (count * prices[i]), 0);
+        if (currentOrders.length > maxOrders || (currentOrders.length === maxOrders && leftoverVal < minLeftoverVal)) {
+          maxOrders = currentOrders.length;
+          minLeftoverVal = leftoverVal;
+          bestResult = { orders: currentOrders, leftovers: currentInventory };
+        }
+      }
+      split_displayResults(bestResult ? bestResult.orders : [], bestResult ? bestResult.leftovers : baseInventory, items, trials);
+    }
+
+    function split_findCombo(prices, inventory, target, errt, indices) {
+      let bestCombo = null;
+      let bestDiff = Infinity;
+      function search(idx, currentItems, currentSum) {
+        if (bestDiff === 0) return;
+        if (currentSum >= target && currentSum <= target + errt) {
+          if ((currentSum - target) < bestDiff) {
+            bestDiff = currentSum - target;
+            bestCombo = [...currentItems];
+          }
+          return;
+        }
+        if (currentSum > target + errt) return;
+        if (idx >= indices.length) return;
+        const pIndex = indices[idx];
+        const p = prices[pIndex];
+        const maxCanTake = Math.min(inventory[pIndex], Math.floor((target + errt - currentSum) / p));
+        for (let q = maxCanTake; q >= 0; q--) {
+          currentItems[pIndex] = q;
+          search(idx + 1, currentItems, currentSum + (q * p));
+          currentItems[pIndex] = 0;
+          if (bestDiff === 0) break;
+        }
+      }
+      search(0, new Array(prices.length).fill(0), 0);
+      return bestCombo ? { items: bestCombo, total: bestCombo.reduce((s, c, i) => s + c * prices[i], 0) } : null;
+    }
+
+    function split_displayResults(results, leftovers, items, trials) {
+      const container = document.getElementById('split-combinationsContainer');
+      const section = document.getElementById('split-resultsSection');
+      section.style.display = 'block';
+
+      let totalItemsInOrders = 0;
+      const usedCounts = new Array(items.length).fill(0);
+      results.forEach(order => {
+        order.items.forEach((qty, idx) => { usedCounts[idx] += qty; totalItemsInOrders += qty; });
+      });
+      let totalUsedVal = 0, totalLeftoverCount = 0, totalLeftoverVal = 0;
+      usedCounts.forEach((qty, idx) => totalUsedVal += qty * items[idx].price);
+      leftovers.forEach((qty, idx) => { totalLeftoverCount += qty; totalLeftoverVal += qty * items[idx].price; });
+
+      let html = `
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-val">${results.length}</div><div class="stat-label">成功拆单</div></div>
+          <div class="stat-card"><div class="stat-val">${totalItemsInOrders} / ${totalItemsInOrders + totalLeftoverCount}</div><div class="stat-label">已用商品</div></div>
+          <div class="stat-card"><div class="stat-val">¥${parseFloat(totalLeftoverVal.toFixed(2))}</div><div class="stat-label">剩余金额</div></div>
+          <div class="stat-card sub-stat"><div class="stat-val">${trials}</div><div class="stat-label">计算次数</div></div>
+        </div>
+      `;
+
+      function generateSection(title, countsArray, totalVal) {
+        const headerHtml = items.map(i => `<th>${i.name}<br><small style="font-weight:400; opacity:0.8;">¥${i.price}</small></th>`).join('');
+        const rowHtml = countsArray.map(c => `<td>${c}</td>`).join('');
+        let mobileRows = '';
+        countsArray.forEach((count, idx) => {
+          if (count > 0) mobileRows += `<div class="mobile-summary-row"><div><span class="mobile-summary-name">${items[idx].name}</span><span class="mobile-summary-price">¥${items[idx].price}</span></div><div style="font-weight:bold;">x ${count}</div></div>`;
+        });
+        return `<h3 style="margin-bottom:10px; margin-top:20px; color:var(--primary-color);">${title} (总值: ¥${parseFloat(totalVal.toFixed(2))})</h3><div class="table-responsive"><table><thead><tr>${headerHtml}</tr></thead><tbody><tr>${rowHtml}</tr></tbody></table></div><div class="mobile-summary-container">${mobileRows}</div>`;
+      }
+
+      if (totalItemsInOrders > 0) html += generateSection("已用商品", usedCounts, totalUsedVal);
+      if (totalLeftoverVal > 0) html += generateSection("剩余商品", leftovers, totalLeftoverVal);
+      else if (results.length > 0) html += '<div class="summary-card" style="background:var(--success-bg); color:var(--success-text); margin-bottom:30px;">完美！所有商品已分配完毕。</div>';
+
+      if (results.length === 0) html += '<div class="summary-card" style="background:var(--error-bg); color:var(--error-text);">无法组成任何符合条件的订单</div>';
+      else {
+        html += `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--input-bg); padding-bottom:15px; margin-top:0;">订单详情</h3>`;
+        results.forEach((r, i) => {
+          let itemsHtml = r.items.map((c, idx) => c > 0 ? `<span class="res-tag">${c} x ${items[idx].name} (¥${items[idx].price})</span>` : '').join('');
+          html += `<div style="background:var(--row-bg); padding:20px; border-radius:16px; margin-bottom:15px; box-shadow:var(--shadow-card); border: 1px solid var(--input-bg);"><div style="font-weight:700; color:var(--primary-color); margin-bottom:10px; font-size:1.1rem;">📦 订单 ${i + 1} <span style="color:var(--text-color); font-weight:400; font-size:0.9rem; float:right;">总价: ¥${parseFloat(r.total.toFixed(2))}</span></div><div style="display:flex; flex-wrap:wrap; gap:8px;">${itemsHtml}</div></div>`;
+        });
+      }
+      container.innerHTML = html;
+      section.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ========================================================
+    // LOGIC: MULTI-SPLIT CALCULATOR (拆多种单 Gamma)
+    // ========================================================
+    function gamma_saveData() {
+      const items = [];
+      document.querySelectorAll('#gamma-items-container .item-row').forEach(row => {
+        items.push({
+          name: row.querySelector('.name-input').value,
+          price: row.querySelector('.price-input').value,
+          qty: row.querySelector('.qty-input').value
+        });
+      });
+      const targets = [];
+      document.querySelectorAll('#gamma-targetContainer .target-row').forEach(row => {
+        targets.push({
+          price: row.querySelector('.t-price').value,
+          count: row.querySelector('.t-count').value
+        });
+      });
+      const data = { items: items, targets: targets, errt: document.getElementById('gamma-errt').value };
+      localStorage.setItem('gamma_calc_data', JSON.stringify(data));
+    }
+
+    function gamma_loadData() {
+      const saved = localStorage.getItem('gamma_calc_data');
+      const iContainer = document.getElementById('gamma-items-container');
+      const tContainer = document.getElementById('gamma-targetContainer');
+      iContainer.innerHTML = ''; tContainer.innerHTML = '';
+
+      if (saved) {
+        const data = JSON.parse(saved);
+        if (data.items && data.items.length) data.items.forEach(item => gamma_addItemRow(item.name, item.price, item.qty));
+        else { gamma_addItemRow(); gamma_addItemRow(); }
+
+        if (data.targets && data.targets.length) data.targets.forEach(t => gamma_addTargetRow(t.price, t.count));
+        else gamma_addTargetRow();
+
+        document.getElementById('gamma-errt').value = data.errt || 5;
+      } else {
+        gamma_addItemRow(); gamma_addItemRow();
+        gamma_addTargetRow();
+      }
+    }
+
+    function gamma_addItemRow(name = '', price = '', qty = '') {
+      const container = document.getElementById('gamma-items-container');
+      const div = document.createElement('div');
+      div.className = 'input-row item-row';
+      div.innerHTML = `
+        <div class="input-group"><label>商品名</label><input type="text" class="name-input" placeholder="例如: 吧唧" value="${name}" onchange="gamma_saveData()"></div>
+        <div class="input-group"><label>单价</label><input type="number" class="price-input" placeholder="0.00" value="${price}" onchange="gamma_saveData()"></div>
+        <div class="input-group"><label>库存</label><input type="number" class="qty-input" placeholder="0" value="${qty}" onchange="gamma_saveData()"></div>
+        <button class="btn-remove" onclick="this.parentElement.remove(); gamma_saveData()">✕</button>
+      `;
+      container.appendChild(div);
+      gamma_saveData();
+    }
+
+    function gamma_addTargetRow(price = '', count = '1') {
+      const container = document.getElementById('gamma-targetContainer');
+      const div = document.createElement('div');
+      div.className = 'target-row';
+      div.innerHTML = `
+        <div class="input-group"><label>金额</label><input type="number" class="t-price" placeholder="188" value="${price}" onchange="gamma_saveData()"></div>
+        <div class="input-group"><label>单数</label><input type="number" class="t-count" value="${count}" min="1" onchange="gamma_saveData()"></div>
+        <button class="btn-remove" onclick="this.parentElement.remove(); gamma_saveData()">✕</button>
+      `;
+      container.appendChild(div);
+      gamma_saveData();
+    }
+
+    function gamma_showError(msg) {
+      const el = document.getElementById('gamma-errorMsg');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function gamma_calculate() {
+      const errorEl = document.getElementById('gamma-errorMsg');
+      errorEl.style.display = 'none';
+
+      const items = [];
+      document.querySelectorAll('#gamma-items-container .item-row').forEach(row => {
+        const n = row.querySelector('.name-input').value.trim();
+        const p = parseFloat(row.querySelector('.price-input').value);
+        const q = parseInt(row.querySelector('.qty-input').value);
+        if (!isNaN(p) && p > 0 && !isNaN(q) && q > 0) items.push({ name: n || `¥${p}`, price: p, qty: q });
+      });
+
+      let targets = [];
+      document.querySelectorAll('#gamma-targetContainer .target-row').forEach(row => {
+        const p = parseFloat(row.querySelector('.t-price').value);
+        const c = parseInt(row.querySelector('.t-count').value);
+        if (!isNaN(p) && p > 0 && !isNaN(c) && c > 0) {
+          for (let i = 0; i < c; i++) targets.push(p);
+        }
+      });
+
+      if (!items.length) return gamma_showError("请输入商品");
+      if (!targets.length) return gamma_showError("请输入目标");
+
+      window.gammaItems = items;
+      const prices = items.map(i => i.price);
+      const inventory = items.map(i => i.qty);
+
+      const schemeA = gamma_runSimulation([...targets], inventory, prices, 200, false, "方案 A (输入顺序)");
+      const targetsDesc = [...targets].sort((a, b) => b - a);
+      const schemeB = gamma_runSimulation(targetsDesc, inventory, prices, 200, false, "方案 B (大额优先)");
+      const schemeC = gamma_runSimulation([...targets], inventory, prices, 600, true, "方案 C (随机优化)");
+
+      gamma_displaySchemes([schemeA, schemeB, schemeC]);
+    }
+
+    function gamma_runSimulation(baseTargets, baseInventory, prices, durationMs, shuffleTargets, name) {
+      const startTime = Date.now();
+      let trials = 0;
+      let bestResult = { name: name, successCount: -1, results: [], leftVal: Infinity, leftoverItems: [...baseInventory], trials: 0 };
+      const errt = parseFloat(document.getElementById('gamma-errt').value) || 0;
+
+      while (Date.now() - startTime < durationMs || trials === 0) {
+        trials++;
+        let currentTargets = [...baseTargets];
+        if (shuffleTargets && trials > 1) shuffle(currentTargets);
+        let currentInv = [...baseInventory];
+        let successes = 0;
+        let currentRunResults = [];
+        let itemIndices = Array.from({ length: prices.length }, (_, i) => i);
+        if (trials === 1) itemIndices.sort((a, b) => prices[b] - prices[a]);
+        else shuffle(itemIndices);
+
+        currentTargets.forEach(t => {
+          const combo = gamma_findCombo(prices, currentInv, t, errt, itemIndices);
+          if (combo) {
+            successes++;
+            currentRunResults.push({ success: true, target: t, items: combo.items, total: combo.total });
+            combo.items.forEach((c, idx) => currentInv[idx] -= c);
+          } else {
+            currentRunResults.push({ success: false, target: t });
+          }
+        });
+
+        const leftVal = currentInv.reduce((s, c, i) => s + c * prices[i], 0);
+        if (successes > bestResult.successCount || (successes === bestResult.successCount && leftVal < bestResult.leftVal)) {
+          bestResult = { name: name, successCount: successes, results: currentRunResults, leftVal: leftVal, leftoverItems: currentInv, trials: trials };
+        }
+      }
+      bestResult.trials = trials;
+      return bestResult;
+    }
+
+    function gamma_findCombo(prices, inventory, target, errt, indices) {
+      let best = null;
+      let minDiff = Infinity;
+      function search(idx, currentItems, currentSum) {
+        if (currentSum >= target && currentSum <= target + errt) {
+          const diff = currentSum - target;
+          if (diff < minDiff) { minDiff = diff; best = [...currentItems]; }
+          if (minDiff === 0) return;
+        }
+        if (best && minDiff === 0) return;
+        if (currentSum > target + errt) return;
+        if (idx >= indices.length) return;
+        const pIdx = indices[idx];
+        const p = prices[pIdx];
+        const maxCanTake = Math.min(inventory[pIdx], Math.floor((target + errt - currentSum) / p));
+        for (let q = maxCanTake; q >= 0; q--) {
+          currentItems[pIdx] = q;
+          search(idx + 1, currentItems, currentSum + (q * p));
+          currentItems[pIdx] = 0;
+          if (minDiff === 0) break;
+        }
+      }
+      search(0, new Array(prices.length).fill(0), 0);
+      return best ? { items: best, total: best.reduce((s, c, i) => s + c * prices[i], 0) } : null;
+    }
+
+    function gamma_displaySchemes(schemes) {
+      const container = document.getElementById('gamma-schemeComparison');
+      container.innerHTML = '';
+      schemes.sort((a, b) => b.successCount - a.successCount || a.leftVal - b.leftVal);
+      window.gammaSchemes = schemes;
+
+      schemes.forEach((s, idx) => {
+        container.innerHTML += `
+          <div class="scheme-card ${idx === 0 ? 'active' : ''}" onclick="gamma_showSchemeDetails(${idx}, this)">
+            <div class="scheme-name">${s.name}</div>
+            <div class="scheme-stat">成功: ${s.successCount}/${s.results.length}</div>
+            <div class="scheme-stat">剩余: ¥${parseFloat(s.leftVal.toFixed(2))}</div>
+          </div>
+        `;
+      });
+      if (schemes.length > 0) gamma_showSchemeDetails(0, document.querySelector('.scheme-card'));
+      document.getElementById('gamma-resultsSection').style.display = 'block';
+      document.getElementById('gamma-resultsSection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    window.gamma_showSchemeDetails = function (idx, cardEl) {
+      if (cardEl) {
+        document.querySelectorAll('.scheme-card').forEach(c => c.classList.remove('active'));
+        cardEl.classList.add('active');
+      }
+      const s = window.gammaSchemes[idx];
+      const items = window.gammaItems;
+      const container = document.getElementById('gamma-detailedResults');
+
+      let totalItemsUsed = 0, totalUsedVal = 0;
+      const usedCounts = new Array(items.length).fill(0);
+      if (s.results) {
+        s.results.forEach(r => {
+          if (r.success) r.items.forEach((qty, i) => { usedCounts[i] += qty; totalItemsUsed += qty; totalUsedVal += qty * items[i].price; });
+        });
+      }
+      let totalLeftoverCount = 0;
+      s.leftoverItems.forEach(qty => totalLeftoverCount += qty);
+
+      let html = `
+         <h3 style="color:var(--primary-color); border-bottom:1px solid var(--input-bg); padding-bottom:15px; margin-top:0;">${s.name} 详情</h3>
+         <div class="stats-grid">
+           <div class="stat-card"><div class="stat-val">${s.successCount} / ${s.results.length}</div><div class="stat-label">订单完成</div></div>
+           <div class="stat-card"><div class="stat-val">${totalItemsUsed} / ${totalItemsUsed + totalLeftoverCount}</div><div class="stat-label">已用商品</div></div>
+           <div class="stat-card"><div class="stat-val">¥${parseFloat(s.leftVal.toFixed(2))}</div><div class="stat-label">剩余价值</div></div>
+           <div class="stat-card sub-stat"><div class="stat-val">${s.trials}</div><div class="stat-label">计算次数</div></div>
+         </div>
+       `;
+
+      function generateSection(title, countsArray, totalVal) {
+        const headerHtml = items.map(i => `<th>${i.name}<br><small style="font-weight:400; opacity:0.8;">¥${i.price}</small></th>`).join('');
+        const rowHtml = countsArray.map(c => `<td>${c}</td>`).join('');
+        let mobileRows = '';
+        countsArray.forEach((count, idx) => {
+          if (count > 0) mobileRows += `<div class="mobile-summary-row"><div><span class="mobile-summary-name">${items[idx].name}</span><span class="mobile-summary-price">¥${items[idx].price}</span></div><div style="font-weight:bold;">x ${count}</div></div>`;
+        });
+        return `<h3 style="margin-bottom:10px; margin-top:20px; color:var(--primary-color);">${title} (总值: ¥${parseFloat(totalVal.toFixed(2))})</h3><div class="table-responsive"><table><thead><tr>${headerHtml}</tr></thead><tbody><tr>${rowHtml}</tr></tbody></table></div><div class="mobile-summary-container">${mobileRows}</div>`;
+      }
+
+      if (totalItemsUsed > 0) html += generateSection("已用商品", usedCounts, totalUsedVal);
+      if (s.leftVal > 0) html += generateSection("剩余商品", s.leftoverItems, s.leftVal);
+      else if (s.successCount === s.results.length) html += `<div class="summary-card" style="background:var(--success-bg); color:var(--success-text); margin-bottom:30px;">完美！所有商品已分配完毕。</div>`;
+
+      html += `<h3 style="color:var(--primary-color); border-bottom:1px solid var(--input-bg); padding-bottom:15px; margin-top:0;">订单列表</h3>`;
+      const sortedResults = [...s.results].sort((a, b) => {
+        if (a.success && !b.success) return -1;
+        if (!a.success && b.success) return 1;
+        return (b.total || 0) - (a.total || 0);
+      });
+
+      sortedResults.forEach((r, i) => {
+        if (r.success) {
+          const itemsHtml = r.items.map((c, idx) => c > 0 ? `<span class="res-tag">${c} x ${items[idx].name} (¥${items[idx].price})</span>` : '').join('');
+          html += `<div style="background:var(--row-bg); padding:20px; border-radius:16px; margin-bottom:15px; box-shadow:var(--shadow-card); border: 1px solid var(--input-bg);"><div style="font-weight:700; color:var(--primary-color); margin-bottom:10px; font-size:1.1rem;">📦 订单 ${i + 1} <span style="color:var(--text-color); font-weight:400; font-size:0.9rem; float:right;">目标: ¥${r.target} | 实际: ¥${parseFloat(r.total.toFixed(2))}</span></div><div style="display:flex; flex-wrap:wrap; gap:8px;">${itemsHtml}</div></div>`;
+        } else {
+          html += `<div style="background:var(--error-bg); color:var(--error-text); padding:15px; border-radius:16px; margin-bottom:15px; box-shadow:var(--shadow-card); opacity:0.8;"><div style="font-weight:700;">⚠️ 订单 #${i + 1} 失败</div><div style="font-size:0.9rem;">无法凑出目标金额 ¥${r.target}</div></div>`;
+        }
+      });
+      container.innerHTML = html;
+    }
+  </script>
+</body>
+
+</html>
