@@ -19,7 +19,7 @@
 
         <div class="info-box">
             <div>
-                <strong>使用说明：</strong> 输入商品的单价、<b>最低</b>需要的数量、目标总价，计算器会给出最接近目标的方案。
+                <strong>使用说明：</strong> 输入商品的单价、（选填）最低/最高数量、目标总价。计算器会找出所有满足数量限制且总价最接近目标的方案。
             </div>
         </div>
 
@@ -58,6 +58,9 @@
                 <table id="resultsTable"></table>
             </div>
 
+            <!-- Mobile results container -->
+            <div id="mobileResults" class="mobile-results-container"></div>
+
             <button class="btn-scroll-top" onclick="window.scrollTo({top:0, behavior:'smooth'})">↑</button>
         </div>
     </div>
@@ -90,7 +93,8 @@
                 items.push({
                     name: row.querySelector('.name-input').value,
                     price: row.querySelector('.price-input').value,
-                    qty: row.querySelector('.qty-input').value
+                    qty: row.querySelector('.qty-input').value,
+                    max: row.querySelector('.max-input').value // Save Max input
                 });
             });
             const data = {
@@ -109,7 +113,7 @@
             if (saved) {
                 const data = JSON.parse(saved);
                 if (data.items && data.items.length > 0) {
-                    data.items.forEach(item => addItemRow(item.name, item.price, item.qty));
+                    data.items.forEach(item => addItemRow(item.name, item.price, item.qty, item.max));
                 } else {
                     initEmptyRows();
                 }
@@ -125,10 +129,14 @@
         }
 
         // --- UI Logic ---
-        function addItemRow(name = '', price = '', qty = '') {
+        function addItemRow(name = '', price = '', qty = '', max = '') {
             const container = document.getElementById('items-container');
             const div = document.createElement('div');
             div.className = 'input-row item-row';
+            
+            // Note: We use a split container for the 3rd input-group to fit Min and Max 
+            // on the same visual row (or grid cell on mobile) without breaking the 
+            // 2-row limit or the external CSS grid layout.
             div.innerHTML = `
         <div class="input-group" style="flex: 1.5;">
           <label>商品名 (选填)</label>
@@ -139,8 +147,16 @@
           <input type="number" class="price-input" placeholder="0.00" min="0" step="0.01" value="${price}" onchange="saveData()">
         </div>
         <div class="input-group">
-          <label>最低数量</label>
-          <input type="number" class="qty-input" placeholder="0" min="0" value="${qty}" onchange="saveData()">
+          <div style="display: flex; gap: 8px;">
+            <div style="flex: 1;">
+               <label style="display:block; font-size: 0.85rem; font-weight: 600; color: var(--text-light); margin-bottom: 4px; margin-left: 2px;">最低</label>
+               <input type="number" class="qty-input" placeholder="0" min="0" value="${qty}" onchange="saveData()" style="width: 100%;">
+            </div>
+            <div style="flex: 1;">
+               <label style="display:block; font-size: 0.85rem; font-weight: 600; color: var(--text-light); margin-bottom: 4px; margin-left: 2px;">最多</label>
+               <input type="number" class="max-input" placeholder="不限" min="0" value="${max}" onchange="saveData()" style="width: 100%;">
+            </div>
+          </div>
         </div>
         <button class="btn-remove" onclick="this.parentElement.remove(); saveData()">✕</button>
       `;
@@ -166,11 +182,14 @@
                 const n = row.querySelector('.name-input').value.trim();
                 const p = parseFloat(row.querySelector('.price-input').value);
                 const q = parseInt(row.querySelector('.qty-input').value);
+                const m = parseInt(row.querySelector('.max-input').value); // Read Max
+                
                 if (!isNaN(p) && p > 0) {
                     items.push({
                         name: n || `¥${p}`,
                         price: p,
-                        min: isNaN(q) ? 0 : q
+                        min: isNaN(q) ? 0 : q,
+                        max: isNaN(m) ? Infinity : m // Default to Infinity if empty
                     });
                 }
             });
@@ -181,18 +200,46 @@
             if (items.length === 0) return showError("请至少输入一个有效的商品单价。");
             if (isNaN(target) || target <= 0) return showError("请输入有效的目标总价。");
 
-            // Sort items
+            // Sort items by price descending for better pruning
             items.sort((a, b) => b.price - a.price);
 
             const results = [];
             const len = items.length;
             const prices = items.map(i => i.price);
             const minItems = items.map(i => i.min);
-            const baseCost = items.reduce((sum, item) => sum + item.price * item.min, 0);
+            
+            // Calculate mandatory base cost from minimum quantities
+            let baseCost = 0;
+            let maxPossibleTotal = 0;
+
+            for (let i = 0; i < len; i++) {
+                if (items[i].max < items[i].min) {
+                     return showError(`商品 "${items[i].name}" 的最大数量不能小于最小数量。`);
+                }
+                baseCost += items[i].price * items[i].min;
+
+                // Calculate max possible total to check if target is reachable
+                if (maxPossibleTotal !== Infinity) {
+                    if (items[i].max === Infinity) {
+                        maxPossibleTotal = Infinity;
+                    } else {
+                        maxPossibleTotal += items[i].price * items[i].max;
+                    }
+                }
+            }
 
             if (baseCost > target + errt) {
-                return showError(`最低数量的总价 (¥${baseCost}) 已经超过了上限 (¥${target + errt})。`);
+                return showError(`最低数量的总价 (¥${baseCost.toFixed(2)}) 已经超过了上限 (¥${(target + errt).toFixed(2)})。`);
             }
+
+            if (maxPossibleTotal < target) {
+                return showError(`即使选了所有商品的最大数量，总价 (¥${maxPossibleTotal.toFixed(2)}) 仍未达到目标 (¥${target})。`);
+            }
+
+            // We solve for the *additional* quantity (delta) for each item
+            // such that: min <= min + delta <= max
+            // Therefore: 0 <= delta <= max - min
+            const maxDeltas = items.map(i => i.max === Infinity ? Infinity : i.max - i.min);
 
             const remainingMin = Math.max(0, target - baseCost);
             const remainingMax = target + errt - baseCost;
@@ -213,22 +260,30 @@
                             return;
                         }
 
-                        const totalCounts = currentCounts.map((c, i) => c + minItems[i]);
+                        // Reconstruct total counts (min + delta)
+                        const totalCounts = currentCounts.map((delta, i) => delta + minItems[i]);
                         const totalVal = totalCounts.reduce((s, c, i) => s + c * prices[i], 0);
                         results.push([...totalCounts, totalVal]);
                     }
                     return;
                 }
 
-                // Pruning: If currentSum already exceeds max, stop this branch
+                // Pruning 1: If currentSum already exceeds max, stop this branch
                 if (currentSum > remainingMax) return;
 
                 const price = prices[index];
-                const maxQty = Math.floor((remainingMax - currentSum) / price);
+                
+                // Calculate max possible delta based on Budget
+                const budgetMaxQty = Math.floor((remainingMax - currentSum) / price);
+                
+                // The actual limit for this item is the smaller of:
+                // 1. What the budget allows
+                // 2. The user-defined upper bound (delta limit)
+                const limit = Math.min(budgetMaxQty, maxDeltas[index]);
 
-                for (let q = 0; q <= maxQty; q++) {
-                    currentCounts[index] = q;
-                    search(index + 1, currentCounts, currentSum + (q * price));
+                for (let delta = 0; delta <= limit; delta++) {
+                    currentCounts[index] = delta;
+                    search(index + 1, currentCounts, currentSum + (delta * price));
                     currentCounts[index] = 0; // Backtrack
                     if (limitReached) return; // Break loop if limit hit
                 }
@@ -236,18 +291,18 @@
 
             search(0, new Array(len).fill(0), 0);
 
-            // Sorting
+            // Sorting results by Total Price, then by Item Quantities
             results.sort((a, b) => {
                 const totalA = a[a.length - 1];
                 const totalB = b[b.length - 1];
                 if (Math.abs(totalA - totalB) > 0.001) return totalA - totalB;
+                // If totals are same, prefer more diverse items or standard sort
                 for (let i = 0; i <= len - 1; i++) {
                     if (a[i] !== b[i]) return b[i] - a[i];
                 }
                 return 0;
             });
 
-            // Pass the limit flag to display
             displayResults(results, items, limitReached);
         }
 
@@ -255,16 +310,7 @@
             const section = document.getElementById('resultsSection');
             const summary = document.getElementById('resultsSummary');
             const table = document.getElementById('resultsTable');
-
-            // Ensure we have a container for mobile cards
-            let mobileContainer = document.getElementById('mobileResults');
-            if (!mobileContainer) {
-                mobileContainer = document.createElement('div');
-                mobileContainer.id = 'mobileResults';
-                mobileContainer.className = 'mobile-results-container';
-                // Insert it after the table-responsive div
-                document.querySelector('.table-responsive').after(mobileContainer);
-            }
+            const mobileContainer = document.getElementById('mobileResults');
 
             // Handle Warning Banner
             const existingWarning = document.getElementById('limitWarningBanner');
@@ -281,13 +327,11 @@
                 return;
             }
 
-            // Add Warning if Limit Reached
             if (limitReached) {
                 const warning = document.createElement('div');
                 warning.id = 'limitWarningBanner';
                 warning.className = 'limit-warning';
                 warning.innerHTML = `<span>结果过多，仅显示前 500 条方案。建议增加“最低数量”或减少“允许超出”金额。</span>`;
-                // Insert after summary
                 summary.after(warning);
             }
 
@@ -312,7 +356,6 @@
                     tr.appendChild(td);
                 }
                 const totalTd = document.createElement('td');
-                // Float fix
                 totalTd.innerHTML = `<b>¥${parseFloat(row[row.length - 1].toFixed(2))}</b>`;
                 tr.appendChild(totalTd);
                 tbody.appendChild(tr);
@@ -324,11 +367,9 @@
                 const totalVal = row[row.length - 1];
 
                 let itemsHtml = '';
-                // Only loop through items (exclude the last element which is total)
                 for (let i = 0; i < row.length - 1; i++) {
                     const count = row[i];
                     if (count > 0) {
-                        // Only show items that have a quantity
                         itemsHtml += `
               <div class="result-item-line">
                 <span class="result-item-name">${items[i].name} (¥${items[i].price})</span>
