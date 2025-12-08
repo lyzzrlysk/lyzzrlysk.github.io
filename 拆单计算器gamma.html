@@ -217,24 +217,24 @@
       const inventory = items.map(i => i.qty);
 
       // --- Simulation Config ---
-      // Scheme A: Fixed Targets (Input), Randomized Items, 200ms
+      // Scheme A: Fixed Targets (Input), Randomized Items, 300ms
       const schemeA = runSimulation(
         [...targets],
-        inventory, prices, 200,
+        inventory, prices, 600,
         false, // Don't randomize target order
         "方案 A (输入顺序)"
       );
 
-      // Scheme B: Fixed Targets (Sorted), Randomized Items, 200ms
+      // Scheme B: Fixed Targets (Sorted), Randomized Items, 300ms
       const targetsDesc = [...targets].sort((a, b) => b - a);
       const schemeB = runSimulation(
         targetsDesc,
-        inventory, prices, 200,
+        inventory, prices, 600,
         false, // Don't randomize target order
         "方案 B (大额优先)"
       );
 
-      // Scheme C: Random Targets, Random Items, 500ms
+      // Scheme C: Random Targets, Random Items, 700ms
       const schemeC = runSimulation(
         [...targets],
         inventory, prices, 600,
@@ -249,10 +249,9 @@
       const startTime = Date.now();
       let trials = 0;
 
-      // Initialize best result with a "worst case" structure
       let bestResult = {
         name: name,
-        successCount: -1, // Start at -1 so any 0+ result overwrites it
+        successCount: -1, 
         results: [],
         leftVal: Infinity,
         leftoverItems: [...baseInventory],
@@ -261,7 +260,6 @@
 
       const errt = parseFloat(document.getElementById('errt').value) || 0;
 
-      // Run loop at least once
       while (Date.now() - startTime < durationMs || trials === 0) {
         trials++;
 
@@ -273,24 +271,27 @@
         let currentInv = [...baseInventory];
         let successes = 0;
         let currentRunResults = [];
+        let useMasking = false;
 
-        // Determine Item Priority for this run
+        // Determine Item Priority & Masking
         let itemIndices = Array.from({ length: prices.length }, (_, i) => i);
         if (trials === 1) {
           // First run always purely greedy (Expensive First)
           itemIndices.sort((a, b) => prices[b] - prices[a]);
+          useMasking = false;
         } else {
-          // Subsequent runs: Randomize item preference
+          // Subsequent runs: Randomize item preference AND enable masking
           shuffle(itemIndices);
+          useMasking = true;
         }
 
         // Process all targets in the specific order
         currentTargets.forEach(t => {
-          const combo = findCombo(prices, currentInv, t, errt, itemIndices);
+          // Pass masking flag
+          const combo = findCombo(prices, currentInv, t, errt, itemIndices, useMasking);
           if (combo) {
             successes++;
             currentRunResults.push({ success: true, target: t, items: combo.items, total: combo.total });
-            // Deduct items from current inventory
             combo.items.forEach((c, idx) => currentInv[idx] -= c);
           } else {
             currentRunResults.push({ success: false, target: t });
@@ -299,8 +300,6 @@
 
         const leftVal = currentInv.reduce((s, c, i) => s + c * prices[i], 0);
 
-        // Compare against best
-        // Update if more successes, OR same successes but less leftovers
         if (successes > bestResult.successCount ||
           (successes === bestResult.successCount && leftVal < bestResult.leftVal)) {
 
@@ -319,46 +318,48 @@
       return bestResult;
     }
 
-    function findCombo(prices, inventory, target, errt, indices) {
+    /**
+     * Updated findCombo with "Quantity Masking"
+     * @param {boolean} useMasking - If true, randomly limits max quantity
+     */
+    function findCombo(prices, inventory, target, errt, indices, useMasking) {
       let best = null;
       let minDiff = Infinity;
 
-      // Recursive Search
       function search(idx, currentItems, currentSum) {
-        // 1. Valid Solution Check
-        // We check this at the very start of every node to ensure we don't skip valid paths
         if (currentSum >= target && currentSum <= target + errt) {
           const diff = currentSum - target;
           if (diff < minDiff) {
             minDiff = diff;
             best = [...currentItems];
           }
-          if (minDiff === 0) return; // Perfect match found, stop searching this branch
+          if (minDiff === 0) return; 
         }
 
-        // 2. Stop Checks
-        // If we have already found a perfect match globally, stop everything
         if (best && minDiff === 0) return;
-
-        // If we exceeded the limit, stop
         if (currentSum > target + errt) return;
-
-        // If we ran out of item types to check, stop
         if (idx >= indices.length) return;
 
-        // 3. Recursive Loop
-        const pIdx = indices[idx]; // Get the actual item index from our shuffled list
+        const pIdx = indices[idx];
         const p = prices[pIdx];
 
-        // Calculate max quantity we can take of this item
-        const maxCanTake = Math.min(inventory[pIdx], Math.floor((target + errt - currentSum) / p));
+        // Greedy Max
+        let maxCanTake = Math.min(inventory[pIdx], Math.floor((target + errt - currentSum) / p));
+
+        // --- NEW: Quantity Masking Logic ---
+        // 30% chance to artificially cap the quantity, simulating this item is "scarce"
+        // This forces the algorithm to explore deeper combinations.
+        if (useMasking && maxCanTake > 0 && Math.random() < 0.3) {
+            maxCanTake = Math.floor(Math.random() * maxCanTake);
+        }
+        // -----------------------------------
 
         for (let q = maxCanTake; q >= 0; q--) {
           currentItems[pIdx] = q;
           search(idx + 1, currentItems, currentSum + (q * p));
-          currentItems[pIdx] = 0; // Backtrack: Reset for next iteration
+          currentItems[pIdx] = 0; // Backtrack
 
-          if (minDiff === 0) break; // Optimization: If perfect match found, break loop
+          if (minDiff === 0) break;
         }
       }
 
@@ -378,7 +379,6 @@
       const container = document.getElementById('schemeComparison');
       container.innerHTML = '';
 
-      // Sort schemes: Most success -> Least Leftover
       schemes.sort((a, b) => b.successCount - a.successCount || a.leftVal - b.leftVal);
       window.savedSchemes = schemes;
 

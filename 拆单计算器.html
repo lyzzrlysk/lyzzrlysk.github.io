@@ -142,17 +142,14 @@
       saveData();
     }
 
-    // --- Algorithm: Greedy Backtracking ---
+    // --- Algorithm: Greedy Backtracking with Quantity Masking ---
 
     // Fisher-Yates Shuffle
     function shuffle(array) {
       let currentIndex = array.length, randomIndex;
-      // While there remain elements to shuffle.
       while (currentIndex != 0) {
-        // Pick a remaining element.
         randomIndex = Math.floor(Math.random() * currentIndex);
         currentIndex--;
-        // And swap it with the current element.
         [array[currentIndex], array[randomIndex]] = [
           array[randomIndex], array[currentIndex]];
       }
@@ -192,7 +189,7 @@
       const numItems = prices.length;
 
       // 3. Monte Carlo Simulation Settings
-      const MAX_TIME_MS = 800; // Run for max 0.8 seconds
+      const MAX_TIME_MS = 1000; // Run for max 1 seconds
       const startTime = Date.now();
 
       let bestResult = null;
@@ -204,14 +201,18 @@
       while (Date.now() - startTime < MAX_TIME_MS) {
         trials++;
 
-        // A. Determine Search Order
-        // Run 1 is always "Greedy" (Sort by Price Descending) for a baseline
-        // Runs 2+ are "Randomized" (Shuffle the priority of items)
+        // A. Determine Search Order & Strategy
         let searchOrder = Array.from({ length: numItems }, (_, i) => i);
+        let useMasking = false;
+
+        // Run 1: Pure Greedy (High Price First) to guarantee baseline
+        // Runs 2+: Randomized Order + Quantity Masking
         if (trials === 1) {
           searchOrder.sort((a, b) => prices[b] - prices[a]);
+          useMasking = false;
         } else {
           shuffle(searchOrder);
+          useMasking = true; // Enable masking for random trials
         }
 
         // B. Run Simulation
@@ -220,8 +221,8 @@
         let canMakeMore = true;
 
         while (canMakeMore) {
-          // Pass the randomized 'searchOrder' to findCombo
-          const combo = findCombo(prices, currentInventory, target, errt, searchOrder);
+          // Pass 'useMasking' flag to the search algorithm
+          const combo = findCombo(prices, currentInventory, target, errt, searchOrder, useMasking);
 
           if (combo) {
             currentOrders.push(combo);
@@ -231,14 +232,12 @@
             canMakeMore = false;
           }
 
-          // Optimization: If current inventory is all 0, stop
           if (currentInventory.every(c => c === 0)) canMakeMore = false;
         }
 
         // C. Evaluate this Run
         const leftoverVal = currentInventory.reduce((sum, count, i) => sum + (count * prices[i]), 0);
 
-        // Criteria: 1. More Orders = Better. 2. Tie-breaker: Less Leftover Value = Better.
         if (currentOrders.length > maxOrders ||
           (currentOrders.length === maxOrders && leftoverVal < minLeftoverVal)) {
 
@@ -251,7 +250,7 @@
         }
       }
 
-      console.log(`Ran ${trials} simulations.`); // Debug info
+      console.log(`Ran ${trials} simulations.`);
 
       if (bestResult) {
         displayResults(bestResult.orders, bestResult.leftovers, items, trials);
@@ -259,15 +258,18 @@
         displayResults([], baseInventory, items, trials);
       }
     }
-    // Updated findCombo that accepts a specific 'indices' order
-    function findCombo(prices, inventory, target, errt, indices) {
+
+    /**
+     * Updated findCombo with "Quantity Masking"
+     * @param {boolean} useMasking - If true, randomly limits max quantity to prevent greedy blocking
+     */
+    function findCombo(prices, inventory, target, errt, indices, useMasking) {
       let bestCombo = null;
       let bestDiff = Infinity;
 
       function search(idx, currentItems, currentSum) {
-        if (bestDiff === 0) return; // Found perfect match
+        if (bestDiff === 0) return; 
 
-        // Check if valid match
         if (currentSum >= target && currentSum <= target + errt) {
           if ((currentSum - target) < bestDiff) {
             bestDiff = currentSum - target;
@@ -279,11 +281,19 @@
         if (currentSum > target + errt) return;
         if (idx >= indices.length) return;
 
-        const pIndex = indices[idx]; // Use the shuffled index
+        const pIndex = indices[idx];
         const p = prices[pIndex];
 
-        // Heuristic: Don't search too deep if we are just randomizing
-        const maxCanTake = Math.min(inventory[pIndex], Math.floor((target + errt - currentSum) / p));
+        // Standard Greedy Max
+        let maxCanTake = Math.min(inventory[pIndex], Math.floor((target + errt - currentSum) / p));
+
+        // --- NEW: Quantity Masking Logic ---
+        // If we are in random mode, sometimes (30% chance) don't take the full amount.
+        // This effectively "masks" the top quantities of this item for this specific branch.
+        if (useMasking && maxCanTake > 0 && Math.random() < 0.3) {
+            maxCanTake = Math.floor(Math.random() * maxCanTake); 
+        }
+        // -----------------------------------
 
         for (let q = maxCanTake; q >= 0; q--) {
           currentItems[pIndex] = q;
@@ -350,7 +360,7 @@
           </div>
         `;
 
-        // B. Mobile List HTML (Only show items with count > 0 to save space)
+        // B. Mobile List HTML
         let mobileRows = '';
         countsArray.forEach((count, idx) => {
           if (count > 0) {
@@ -398,12 +408,10 @@
         </div>
       `;
 
-      // Add Used Items Section
       if (totalItemsInOrders > 0) {
         htmlContent += generateResponsiveSection("已用商品", usedCounts, totalUsedVal);
       }
 
-      // Add Leftover Items Section
       if (totalLeftoverVal > 0) {
         htmlContent += generateResponsiveSection("剩余商品", leftovers, totalLeftoverVal);
       } else if (results.length > 0) {
