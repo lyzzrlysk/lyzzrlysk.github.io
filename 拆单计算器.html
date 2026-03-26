@@ -19,7 +19,7 @@
 
     <div class="info-box">
       <div>
-        <strong>使用说明：</strong> 输入所有商品的单价数量和目标单笔金额，计算器会将商品拆分成尽可能多的订单。
+        <strong>使用说明：</strong> 输入所有商品的单价、数量、（选填）每单数量上限，以及目标单笔金额，计算器会将商品拆分成尽可能多的订单。
       </div>
     </div>
 
@@ -85,7 +85,8 @@
         items.push({
           name: row.querySelector('.name-input').value,
           price: row.querySelector('.price-input').value,
-          qty: row.querySelector('.qty-input').value
+          qty: row.querySelector('.qty-input').value,
+          limit: row.querySelector('.limit-input').value
         });
       });
       const data = {
@@ -104,7 +105,7 @@
       if (saved) {
         const data = JSON.parse(saved);
         if (data.items && data.items.length) {
-          data.items.forEach(item => addItemRow(item.name, item.price, item.qty));
+          data.items.forEach(item => addItemRow(item.name, item.price, item.qty, item.limit));
         } else {
           initEmptyRows();
         }
@@ -119,13 +120,13 @@
       addItemRow(); addItemRow();
     }
 
-    function addItemRow(name = '', price = '', qty = '') {
+    function addItemRow(name = '', price = '', qty = '', limit = '') {
       const container = document.getElementById('items-container');
       const div = document.createElement('div');
       div.className = 'input-row item-row';
       div.innerHTML = `
         <div class="input-group" style="flex: 1.5;">
-          <label>商品名 (选填)</label>
+          <label>商品名（选填）</label>
           <input type="text" class="name-input" placeholder="例如: 吧唧" value="${name}" onchange="saveData()">
         </div>
         <div class="input-group">
@@ -133,8 +134,12 @@
           <input type="number" class="price-input" placeholder="0.00" min="0" step="0.01" value="${price}" onchange="saveData()">
         </div>
         <div class="input-group">
-          <label>库存数量</label>
+          <label>数量</label>
           <input type="number" class="qty-input" placeholder="0" min="0" value="${qty}" onchange="saveData()">
+        </div>
+        <div class="input-group" style="flex: 0.8;">
+          <label>每单上限（选填）</label>
+          <input type="number" class="limit-input" placeholder="不限" min="1" value="${limit}" onchange="saveData()">
         </div>
         <button class="btn-remove" onclick="this.parentElement.remove(); saveData()">✕</button>
       `;
@@ -172,8 +177,12 @@
         const n = row.querySelector('.name-input').value.trim();
         const p = parseFloat(row.querySelector('.price-input').value);
         const q = parseInt(row.querySelector('.qty-input').value);
+        const l = parseInt(row.querySelector('.limit-input').value);
+        
         if (!isNaN(p) && p > 0 && !isNaN(q) && q > 0) {
-          items.push({ name: n || `¥${p}`, price: p, qty: q });
+          // If limit is NaN or <= 0, treat as Infinity
+          const limit = (!isNaN(l) && l > 0) ? l : Infinity;
+          items.push({ name: n || `¥${p}`, price: p, qty: q, limit: limit });
         }
       });
 
@@ -186,6 +195,7 @@
       // 2. Prepare Data for Simulation
       const prices = items.map(i => i.price);
       const baseInventory = items.map(i => i.qty);
+      const itemLimits = items.map(i => i.limit);
       const numItems = prices.length;
 
       // 3. Monte Carlo Simulation Settings
@@ -221,8 +231,8 @@
         let canMakeMore = true;
 
         while (canMakeMore) {
-          // Pass 'useMasking' flag to the search algorithm
-          const combo = findCombo(prices, currentInventory, target, errt, searchOrder, useMasking);
+          // Pass 'useMasking' flag and item limits to the search algorithm
+          const combo = findCombo(prices, currentInventory, itemLimits, target, errt, searchOrder, useMasking);
 
           if (combo) {
             currentOrders.push(combo);
@@ -260,10 +270,9 @@
     }
 
     /**
-     * Updated findCombo with "Quantity Masking"
-     * @param {boolean} useMasking - If true, randomly limits max quantity to prevent greedy blocking
+     * Updated findCombo with "Quantity Masking" and "Item Limit"
      */
-    function findCombo(prices, inventory, target, errt, indices, useMasking) {
+    function findCombo(prices, inventory, limits, target, errt, indices, useMasking) {
       let bestCombo = null;
       let bestDiff = Infinity;
 
@@ -284,12 +293,14 @@
         const pIndex = indices[idx];
         const p = prices[pIndex];
 
-        // Standard Greedy Max
-        let maxCanTake = Math.min(inventory[pIndex], Math.floor((target + errt - currentSum) / p));
+        // Standard Greedy Max, bound by inventory, funds, AND user-defined limit
+        let maxCanTake = Math.min(
+          inventory[pIndex], 
+          Math.floor((target + errt - currentSum) / p),
+          limits[pIndex]
+        );
 
-        // --- NEW: Quantity Masking Logic ---
-        // If we are in random mode, sometimes (30% chance) don't take the full amount.
-        // This effectively "masks" the top quantities of this item for this specific branch.
+        // --- Quantity Masking Logic ---
         if (useMasking && maxCanTake > 0 && Math.random() < 0.3) {
             maxCanTake = Math.floor(Math.random() * maxCanTake); 
         }

@@ -18,7 +18,7 @@
 
     <div class="info-box">
       <div>
-        <strong>使用说明：</strong> 输入所有商品的单价、数量、目标单笔金额、目标单数，计算器会将商品拆分成尽可能多的订单。
+        <strong>使用说明：</strong> 输入所有商品的单价、数量、（选填）每单数量上限，以及目标单笔金额和目标单数，计算器会将商品拆分成尽可能多的订单。
       </div>
     </div>
 
@@ -26,18 +26,18 @@
     <div id="items-container"></div>
     <button class="btn-add" onclick="addItemRow()">+ 添加一行商品</button>
 
-    <div class="section-title">第二步：设置目标订单</div>
+    <div class="section-title">第二步：拆单设置</div>
     <div id="targetContainer"></div>
     <button class="btn-add" onclick="addTargetRow()">+ 添加目标金额</button>
 
     <div class="input-row" style="margin-top: 20px; background: var(--card-bg); box-shadow:var(--shadow-card);">
       <div class="input-group">
-        <label>统一允许误差 (¥)</label>
+        <label>每单允许超出 (¥)</label>
         <input type="number" id="errt" value="5" onchange="saveData()">
       </div>
     </div>
 
-    <button class="btn-primary" onclick="calculate()">计算最佳方案</button>
+    <button class="btn-primary" onclick="calculate()">开始拆单</button>
     <div id="errorMsg"
       style="display:none; margin-top:20px; padding:15px; background:var(--error-bg); color:var(--error-text); border-radius:12px; text-align:center;">
     </div>
@@ -83,7 +83,8 @@
         items.push({
           name: row.querySelector('.name-input').value,
           price: row.querySelector('.price-input').value,
-          qty: row.querySelector('.qty-input').value
+          qty: row.querySelector('.qty-input').value,
+          limit: row.querySelector('.limit-input').value
         });
       });
       const targets = [];
@@ -108,7 +109,7 @@
         const iContainer = document.getElementById('items-container');
         iContainer.innerHTML = '';
         if (data.items && data.items.length) {
-          data.items.forEach(item => addItemRow(item.name, item.price, item.qty));
+          data.items.forEach(item => addItemRow(item.name, item.price, item.qty, item.limit));
         } else {
           addItemRow(); addItemRow();
         }
@@ -128,22 +129,26 @@
       }
     }
 
-    function addItemRow(name = '', price = '', qty = '') {
+    function addItemRow(name = '', price = '', qty = '', limit = '') {
       const container = document.getElementById('items-container');
       const div = document.createElement('div');
       div.className = 'input-row item-row';
       div.innerHTML = `
         <div class="input-group">
-          <label>商品名</label>
+          <label>商品名（选填）</label>
           <input type="text" class="name-input" placeholder="例如: 吧唧" value="${name}" onchange="saveData()">
         </div>
         <div class="input-group">
-          <label>单价</label>
+          <label>单价 (¥)</label>
           <input type="number" class="price-input" placeholder="0.00" value="${price}" onchange="saveData()">
         </div>
         <div class="input-group">
-          <label>库存</label>
+          <label>数量</label>
           <input type="number" class="qty-input" placeholder="0" value="${qty}" onchange="saveData()">
+        </div>
+        <div class="input-group">
+          <label>每单上限（选填）</label>
+          <input type="number" class="limit-input" placeholder="不限" min="1" value="${limit}" onchange="saveData()">
         </div>
         <button class="btn-remove" onclick="this.parentElement.remove(); saveData()">✕</button>
       `;
@@ -157,7 +162,7 @@
       div.className = 'target-row';
       div.innerHTML = `
         <div class="input-group">
-          <label>金额</label>
+          <label>目标金额 (¥)</label>
           <input type="number" class="t-price" placeholder="188" value="${price}" onchange="saveData()">
         </div>
         <div class="input-group">
@@ -192,8 +197,11 @@
         const n = row.querySelector('.name-input').value.trim();
         const p = parseFloat(row.querySelector('.price-input').value);
         const q = parseInt(row.querySelector('.qty-input').value);
+        const l = parseInt(row.querySelector('.limit-input').value);
+
         if (!isNaN(p) && p > 0 && !isNaN(q) && q > 0) {
-          items.push({ name: n || `¥${p}`, price: p, qty: q });
+          const limit = (!isNaN(l) && l > 0) ? l : Infinity;
+          items.push({ name: n || `¥${p}`, price: p, qty: q, limit: limit });
         }
       });
 
@@ -215,12 +223,13 @@
 
       const prices = items.map(i => i.price);
       const inventory = items.map(i => i.qty);
+      const limits = items.map(i => i.limit);
 
       // --- Simulation Config ---
       // Scheme A: Fixed Targets (Input), Randomized Items, 300ms
       const schemeA = runSimulation(
         [...targets],
-        inventory, prices, 600,
+        inventory, limits, prices, 600,
         false, // Don't randomize target order
         "方案 A (输入顺序)"
       );
@@ -229,7 +238,7 @@
       const targetsDesc = [...targets].sort((a, b) => b - a);
       const schemeB = runSimulation(
         targetsDesc,
-        inventory, prices, 600,
+        inventory, limits, prices, 600,
         false, // Don't randomize target order
         "方案 B (大额优先)"
       );
@@ -237,7 +246,7 @@
       // Scheme C: Random Targets, Random Items, 700ms
       const schemeC = runSimulation(
         [...targets],
-        inventory, prices, 600,
+        inventory, limits, prices, 600,
         true, // Randomize target order
         "方案 C (随机优化)"
       );
@@ -245,7 +254,7 @@
       displaySchemes([schemeA, schemeB, schemeC]);
     }
 
-    function runSimulation(baseTargets, baseInventory, prices, durationMs, shuffleTargets, name) {
+    function runSimulation(baseTargets, baseInventory, limits, prices, durationMs, shuffleTargets, name) {
       const startTime = Date.now();
       let trials = 0;
 
@@ -287,8 +296,8 @@
 
         // Process all targets in the specific order
         currentTargets.forEach(t => {
-          // Pass masking flag
-          const combo = findCombo(prices, currentInv, t, errt, itemIndices, useMasking);
+          // Pass masking flag and limits
+          const combo = findCombo(prices, currentInv, limits, t, errt, itemIndices, useMasking);
           if (combo) {
             successes++;
             currentRunResults.push({ success: true, target: t, items: combo.items, total: combo.total });
@@ -319,10 +328,9 @@
     }
 
     /**
-     * Updated findCombo with "Quantity Masking"
-     * @param {boolean} useMasking - If true, randomly limits max quantity
+     * Updated findCombo with "Quantity Masking" and "Item Limit"
      */
-    function findCombo(prices, inventory, target, errt, indices, useMasking) {
+    function findCombo(prices, inventory, limits, target, errt, indices, useMasking) {
       let best = null;
       let minDiff = Infinity;
 
@@ -343,12 +351,14 @@
         const pIdx = indices[idx];
         const p = prices[pIdx];
 
-        // Greedy Max
-        let maxCanTake = Math.min(inventory[pIdx], Math.floor((target + errt - currentSum) / p));
+        // Greedy Max, respecting inventory, remaining target amount, and user limit
+        let maxCanTake = Math.min(
+          inventory[pIdx], 
+          Math.floor((target + errt - currentSum) / p),
+          limits[pIdx]
+        );
 
-        // --- NEW: Quantity Masking Logic ---
-        // 30% chance to artificially cap the quantity, simulating this item is "scarce"
-        // This forces the algorithm to explore deeper combinations.
+        // --- Quantity Masking Logic ---
         if (useMasking && maxCanTake > 0 && Math.random() < 0.3) {
             maxCanTake = Math.floor(Math.random() * maxCanTake);
         }
